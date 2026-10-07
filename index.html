@@ -1,0 +1,3032 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e3c72">
+<title>مصاريف الإنشاءات</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height:100vh; color:#333; }
+  .container { max-width:1300px; margin:0 auto; padding:15px; }
+  header { background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  header h1 { color:#1e3c72; font-size:20px; }
+  header h1 span { color:#ff8c00; }
+  .project-info { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .project-info input { padding:8px 10px; border:2px solid #ddd; border-radius:8px; font-size:13px; }
+  .project-info input:focus { outline:none; border-color:#ff8c00; }
+  .cloud-status-bar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; padding:12px 15px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 15px rgba(102,126,234,0.3); }
+  .cloud-status-bar.disconnected { background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); }
+  .cloud-status-bar.syncing { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
+  .cloud-status-bar.error { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+  .cloud-status-bar.success { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+  .cloud-info { display:flex; align-items:center; gap:10px; }
+  .cloud-icon { font-size:22px; }
+  .cloud-text h4 { font-size:13px; margin-bottom:2px; }
+  .cloud-text p { font-size:10px; opacity:0.9; }
+  .cloud-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .cloud-btn { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:5px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600; }
+  .cloud-btn:hover { background:rgba(255,255,255,0.3); }
+  .cloud-btn.primary { background:#fff; color:#667eea; }
+  .save-status-bar { background:#fff; padding:10px 15px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); border-right:4px solid #27ae60; }
+  .save-status { display:flex; align-items:center; gap:8px; font-size:12px; color:#555; }
+  .save-indicator { width:10px; height:10px; border-radius:50%; background:#27ae60; animation: pulse 2s infinite; }
+  .save-indicator.saving { background:#f39c12; }
+  .save-indicator.error { background:#e74c3c; animation:none; }
+  .save-indicator.syncing { background:#3498db; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.6;transform:scale(1.2);} }
+  .save-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .save-info { display:flex; gap:10px; font-size:11px; color:#777; flex-wrap:wrap; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:15px; }
+  .stat-card { background:#fff; padding:14px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.08); border-right:4px solid; }
+  .stat-card.budget { border-color:#2ecc71; } .stat-card.spent { border-color:#e74c3c; }
+  .stat-card.remaining { border-color:#3498db; } .stat-card.cash { border-color:#27ae60; }
+  .stat-card.credit { border-color:#f39c12; } .stat-card.check { border-color:#2980b9; }
+  .stat-card.overdue { border-color:#c0392b; }
+  .stat-card h3 { font-size:11px; color:#777; margin-bottom:4px; }
+  .stat-card .value { font-size:16px; font-weight:bold; color:#1e3c72; }
+  .stat-card .sub { font-size:10px; color:#999; margin-top:2px; }
+  .progress-bar { background:#eee; height:6px; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#2ecc71,#f39c12,#e74c3c); transition:width .5s; }
+  .main-grid { display:grid; grid-template-columns:1fr 1.5fr; gap:15px; }
+  @media (max-width:900px){ .main-grid { grid-template-columns:1fr; } }
+  .card { background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08); margin-bottom:15px; }
+  .card h2 { color:#1e3c72; margin-bottom:12px; font-size:16px; border-bottom:2px solid #ff8c00; padding-bottom:6px; }
+  .form-group { margin-bottom:10px; }
+  .form-group label { display:block; margin-bottom:4px; font-size:12px; color:#555; font-weight:600; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#ff8c00; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .conditional-fields { display:none; background:#fff8e1; padding:10px; border-radius:8px; border:1px dashed #f39c12; margin-top:8px; }
+  .conditional-fields.show { display:block; }
+  .conditional-fields h4 { color:#e67e22; font-size:12px; margin-bottom:8px; }
+  .statement-fields { display:none; background:#f3e5f5; padding:10px; border-radius:8px; border:1px dashed #9c27b0; margin-top:8px; }
+  .statement-fields.show { display:block; }
+  .statement-fields h4 { color:#9c27b0; font-size:12px; margin-bottom:8px; }
+  .payment-stmt-fields { display:none; background:#e0f2f1; padding:10px; border-radius:8px; border:1px dashed #00897b; margin-top:8px; }
+  .payment-stmt-fields.show { display:block; }
+  .payment-stmt-fields h4 { color:#00897b; font-size:12px; margin-bottom:8px; }
+  /* ✅ تحديث ألوان قسم كشف المشروع */
+  .project-stmt-fields { display:none; background:#e8eaf6; padding:10px; border-radius:8px; border:1px dashed #3f51b5; margin-top:8px; }
+  .project-stmt-fields.show { display:block; }
+  .project-stmt-fields h4 { color:#3f51b5; font-size:12px; margin-bottom:8px; }
+  .btn { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; transition:.2s; touch-action: manipulation; }
+  .btn:active { transform:scale(0.96); }
+  .btn-primary { background:#ff8c00; color:#fff; }
+  .btn-sm { padding:6px 10px; font-size:11px; }
+  .btn-edit { background:#3498db; color:#fff; } .btn-delete { background:#e74c3c; color:#fff; }
+  .btn-export { background:#2ecc71; color:#fff; } .btn-excel { background:#217346; color:#fff; }
+  .btn-pdf { background:#c0392b; color:#fff; } .btn-print { background:#34495e; color:#fff; }
+  .btn-invoice { background:#8e44ad; color:#fff; } .btn-import { background:#9b59b6; color:#fff; }
+  .btn-pay { background:#27ae60; color:#fff; } .btn-backup { background:#16a085; color:#fff; }
+  .btn-restore { background:#d35400; color:#fff; } .btn-settings { background:#34495e; color:#fff; }
+  .btn-sync-header { background:#2ecc71; color:#fff; animation: pulse 2s infinite; }
+  .btn-test { background:#3498db; color:#fff; }
+  .btn-clear-filter { background:#78909c; color:#fff; }
+  .actions { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
+  .filter-bar input, .filter-bar select { padding:7px; border:2px solid #e0e0e0; border-radius:8px; font-size:12px; }
+  .filter-bar .date-filter { display:flex; align-items:center; gap:5px; }
+  .filter-bar .date-filter label { font-size:11px; color:#555; font-weight:600; white-space:nowrap; }
+  .filter-bar .date-filter input[type="date"] { padding:6px 8px; font-size:11px; }
+  .filter-section { background:#f5f7fa; padding:10px; border-radius:8px; margin-bottom:10px; border-right:3px solid #5c6bc0; }
+  .filter-section-title { font-size:12px; color:#5c6bc0; font-weight:bold; margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; }
+  table th { background:#1e3c72; color:#fff; padding:8px; text-align:right; font-size:11px; }
+  table td { padding:7px; border-bottom:1px solid #eee; font-size:11px; }
+  table tr:hover { background:#f9f9f9; }
+  .table-wrap { overflow-x:auto; max-height:400px; overflow-y:auto; }
+  .category-badge, .payment-badge, .status-badge, .stmt-badge { padding:3px 7px; border-radius:8px; font-size:9px; color:#fff; display:inline-block; font-weight:600; }
+  .payment-cash { background:#27ae60; } .payment-credit { background:#f39c12; } .payment-check { background:#2980b9; }
+  .status-paid { background:#27ae60; } .status-pending { background:#f39c12; } .status-overdue { background:#c0392b; }
+  .stmt-type-1 { background:#9c27b0; } .stmt-type-2 { background:#00897b; } .stmt-type-3 { background:#3f51b5; }
+  .payer-badge { background:#6c5ce7; padding:3px 7px; border-radius:8px; font-size:9px; color:#fff; display:inline-block; font-weight:600; }
+  .stmt-no-badge { background:#00897b; padding:3px 7px; border-radius:8px; font-size:10px; color:#fff; display:inline-block; font-weight:600; }
+  .proj-badge { background:#5c6bc0; padding:3px 7px; border-radius:8px; font-size:10px; color:#fff; display:inline-block; font-weight:600; }
+  /* ✅ أيقونة رقم الكشف في السجل */
+  .stmt-num-cell { text-align:center; }
+  .stmt-num-icon { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#00897b,#00695c); color:#fff; font-size:13px; font-weight:bold; box-shadow:0 2px 6px rgba(0,137,123,0.3); }
+  .stmt-num-empty { color:#bbb; font-size:14px; }
+  .empty { text-align:center; padding:20px; color:#999; }
+  .chart-container { position:relative; height:250px; }
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+  @media (max-width:900px){ .charts-grid { grid-template-columns:1fr; } }
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; }
+  .modal.active { display:flex; }
+  .modal-content { background:#fff; padding:20px; border-radius:12px; width:95%; max-width:650px; max-height:90vh; overflow-y:auto; }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .close-btn { background:none; border:none; font-size:24px; cursor:pointer; color:#999; }
+  footer { text-align:center; color:#fff; padding:15px; font-size:12px; opacity:.8; }
+  .toast-container { position:fixed; top:10px; left:10px; z-index:2000; display:flex; flex-direction:column; gap:8px; max-width: calc(100% - 20px); }
+  .toast { background:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.2); display:flex; align-items:center; gap:8px; animation: slideIn 0.3s ease-out; border-right:4px solid #27ae60; }
+  .toast.success { border-color:#27ae60; } .toast.warning { border-color:#f39c12; }
+  .toast.error { border-color:#e74c3c; } .toast.info { border-color:#3498db; }
+  .toast-icon { font-size:18px; } .toast-message { flex:1; font-size:12px; color:#333; }
+  .toast-close { background:none; border:none; color:#999; cursor:pointer; font-size:16px; }
+  @keyframes slideIn { from{transform:translateX(-100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+  .cloud-setup { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding:15px; border-radius:12px; }
+  .cloud-setup h3 { color:#1e3c72; margin-bottom:10px; font-size:15px; }
+  .setup-steps { background:#fff; padding:12px; border-radius:8px; margin:12px 0; border-right:4px solid #667eea; }
+  .setup-steps ol { padding-right:18px; line-height:1.7; font-size:12px; color:#555; }
+  .setup-steps ol li { margin-bottom:6px; }
+  .setup-steps a { color:#667eea; font-weight:bold; text-decoration:none; }
+  .neon-box { background: linear-gradient(135deg, #00c853 0%, #009688 100%); color:#fff; padding:12px; border-radius:10px; margin:12px 0; text-align:center; }
+  .neon-box h4 { margin-bottom:6px; font-size:14px; }
+  .neon-box p { font-size:11px; opacity:0.95; margin-bottom:10px; }
+  .neon-box .btn { background:#fff; color:#009688; font-weight:bold; }
+  .qr-share-box { background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); color:#fff; padding:12px; border-radius:10px; margin:12px 0; text-align:center; }
+  .qr-share-box h4 { margin-bottom:6px; font-size:14px; }
+  .qr-share-box p { font-size:11px; opacity:0.95; margin-bottom:10px; }
+  .qr-share-box .btn { background:#fff; color:#e91e63; font-weight:bold; margin:0 4px; }
+  .loading-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation: spin 0.8s linear infinite; vertical-align:middle; margin-left:5px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .qr-display-area { background:#fff; padding:15px; border-radius:12px; text-align:center; border:3px dashed #e91e63; margin:12px 0; }
+  #qrcode { display:inline-block; padding:10px; background:#fff; border-radius:8px; }
+  #qr-reader { width:100%; max-width:350px; margin:12px auto; border:3px solid #00bcd4; border-radius:12px; overflow:hidden; }
+  .scan-status { text-align:center; padding:8px; border-radius:8px; margin-top:8px; font-size:12px; font-weight:600; }
+  .scan-status.scanning { background:#e3f2fd; color:#1976d2; }
+  .scan-status.success { background:#e8f5e9; color:#2e7d32; }
+  .scan-status.error { background:#ffebee; color:#c62828; }
+  .backup-list { display:flex; flex-direction:column; gap:8px; max-height:350px; overflow-y:auto; }
+  .backup-item { background:#f8f9fa; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border-right:4px solid #16a085; }
+  .backup-item .info { flex:1; }
+  .backup-item .date { font-weight:600; font-size:12px; color:#1e3c72; }
+  .backup-item .details { font-size:10px; color:#777; margin-top:2px; }
+  .backup-item .actions { display:flex; gap:4px; }
+  .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .setting-item { background:#f8f9fa; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
+  .setting-item .label { font-size:12px; font-weight:600; color:#333; }
+  .setting-item .desc { font-size:10px; color:#777; margin-top:2px; }
+  .toggle { position:relative; width:44px; height:24px; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; inset:0; background:#ccc; border-radius:24px; cursor:pointer; transition:.3s; }
+  .slider:before { content:''; position:absolute; height:18px; width:18px; right:3px; top:3px; background:#fff; border-radius:50%; transition:.3s; }
+  .toggle input:checked + .slider { background:#27ae60; }
+  .toggle input:checked + .slider:before { transform:translateX(-20px); }
+  .error-details { background:#ffebee; padding:10px; border-radius:8px; border-right:4px solid #e74c3c; margin-top:10px; font-size:12px; color:#c0392b; }
+  .success-box { background:#e8f5e9; padding:10px; border-radius:8px; border-right:4px solid #27ae60; margin-top:10px; font-size:12px; color:#27ae60; }
+  .invoice-wrapper { display: none; position: absolute; left: -9999px; top: 0; width: 210mm; background: #fff; z-index: -1; }
+  .invoice-wrapper.printing { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; z-index: 9999 !important; }
+  .invoice { width: 210mm; min-height: 297mm; padding: 15mm; margin: 0 auto; background: #fff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color:#222; position:relative; }
+  .invoice::before { content:''; position:absolute; top:0; right:0; left:0; height:8mm; background: linear-gradient(90deg, #1e3c72, #ff8c00); }
+  .inv-header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #1e3c72; padding-bottom:12px; margin-bottom:15px; }
+  .inv-logo { font-size:22px; font-weight:bold; color:#1e3c72; }
+  .inv-logo span { color:#ff8c00; }
+  .inv-title { text-align:left; font-size:18px; color:#fff; background:#1e3c72; padding:6px 15px; border-radius:6px; }
+  .inv-meta { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:18px; }
+  .inv-meta-box { background:#f8f9fa; padding:12px; border-radius:8px; border-right:4px solid #ff8c00; }
+  .inv-meta-box h4 { color:#1e3c72; margin-bottom:6px; font-size:13px; }
+  .inv-meta-box p { margin:3px 0; font-size:12px; }
+  .inv-table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+  .inv-table th { background:#1e3c72; color:#fff; padding:10px; text-align:right; font-size:12px; }
+  .inv-table td { padding:10px; border-bottom:1px solid #ddd; font-size:12px; }
+  .inv-total { background: linear-gradient(135deg, #1e3c72, #2a5298); color:#fff; padding:15px; border-radius:8px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; }
+  .inv-total .label { font-size:14px; }
+  .inv-total .amount { font-size:22px; font-weight:bold; }
+  .inv-payment { padding:12px; border-radius:8px; margin-bottom:18px; border-right:4px solid; }
+  .inv-payment.cash { background:#e8f5e9; border-color:#27ae60; }
+  .inv-payment.credit { background:#fff8e1; border-color:#f39c12; }
+  .inv-payment.check { background:#e3f2fd; border-color:#2980b9; }
+  .inv-payment h4 { margin-bottom:6px; font-size:13px; }
+  .inv-payment p { margin:3px 0; font-size:12px; }
+  .inv-payer-box { background:#f3e5f5; padding:12px; border-radius:8px; margin-bottom:18px; border-right:4px solid #9c27b0; }
+  .inv-payer-box h4 { color:#6a1b9a; margin-bottom:6px; font-size:13px; }
+  .inv-payer-box p { margin:3px 0; font-size:12px; }
+  .inv-notes { background:#fff8e1; padding:12px; border-radius:8px; border-right:4px solid #f39c12; margin-bottom:18px; }
+  .inv-notes h4 { color:#e67e22; margin-bottom:6px; font-size:13px; }
+  .inv-signatures { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:30px; }
+  .inv-sig-box { text-align:center; }
+  .inv-sig-line { border-top:2px solid #333; margin-top:40px; padding-top:6px; font-size:12px; }
+  .inv-stamp { position:absolute; bottom:25mm; left:20mm; border:3px double #c0392b; color:#c0392b; padding:8px 15px; border-radius:50%; font-weight:bold; transform:rotate(-15deg); opacity:0.6; font-size:12px; }
+  .inv-stamp.paid { border-color:#27ae60; color:#27ae60; }
+  .inv-footer { margin-top:auto; padding-top:15px; border-top:2px dashed #ccc; text-align:center; color:#777; font-size:11px; }
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: #fff !important; }
+    body > *:not(.invoice-wrapper) { display: none !important; }
+    .invoice-wrapper { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; z-index: 9999 !important; background: #fff !important; }
+    .invoice { box-shadow: none !important; margin: 0 !important; width: 100% !important; min-height: auto !important; }
+  }
+  @media (max-width: 600px) {
+    .container { padding:10px; } header { padding:12px; } header h1 { font-size:18px; }
+    .project-info input { width:120px !important; font-size:12px; }
+    .stats { grid-template-columns:repeat(2, 1fr); } .stat-card { padding:10px; } .stat-card .value { font-size:14px; }
+    .form-row, .form-row-3 { grid-template-columns:1fr; } .settings-grid { grid-template-columns:1fr; }
+    .cloud-status-bar { padding:10px; } .cloud-text h4 { font-size:12px; } .cloud-text p { font-size:9px; }
+    .btn-sm { padding:5px 8px; font-size:10px; } .filter-bar { flex-direction:column; }
+    .filter-bar input, .filter-bar select { width:100%; }
+  }
+  .report-date-filter { background:#f5f7fa; padding:15px; border-radius:8px; margin-bottom:15px; border-right:4px solid #ff8c00; }
+  .report-date-filter h4 { color:#1e3c72; margin-bottom:10px; font-size:14px; }
+  .report-date-filter .date-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .report-date-filter .date-row label { font-size:13px; font-weight:600; }
+  .report-date-filter .date-row input, .report-date-filter .date-row select { padding:8px; border:2px solid #ddd; border-radius:6px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="container">
+  <header>
+    <h1>🏗️ مصاريف <span>الإنشاءات</span></h1>
+    <div class="project-info">
+      <input type="text" id="projectName" placeholder="اسم المشروع" style="width:140px">
+      <input type="number" id="projectBudget" placeholder="الميزانية (د.أ)" style="width:120px" min="0">
+      <button class="btn btn-primary btn-sm" onclick="saveProject()">💾 حفظ</button>
+      <button class="btn btn-sync-header btn-sm" onclick="forceSync()" id="headerSyncBtn" style="display:none;">🔄 مزامنة</button>
+    </div>
+  </header>
+  <div class="cloud-status-bar disconnected" id="cloudStatusBar">
+    <div class="cloud-info">
+      <div class="cloud-icon" id="cloudIcon">☁️</div>
+      <div class="cloud-text">
+        <h4 id="cloudTitle">المزامنة غير مفعّلة</h4>
+        <p id="cloudSubtitle">اضغط "إعداد" للربط مع Neon</p>
+      </div>
+    </div>
+    <div class="cloud-actions">
+      <button class="cloud-btn primary" onclick="openCloudSetupModal()">⚙️ إعداد</button>
+      <button class="cloud-btn" onclick="testConnection()" id="testConnBtn" style="display:none;">🔍 اختبار</button>
+    </div>
+  </div>
+  <div class="save-status-bar">
+    <div class="save-status">
+      <div class="save-indicator" id="saveIndicator"></div>
+      <span id="saveStatusText">جاهز</span>
+      <span style="color:#ccc">|</span>
+      <span id="lastSaveTime">آخر حفظ: --</span>
+    </div>
+    <div class="save-info">
+      <span>📦 <strong id="dataSize">0 KB</strong></span>
+      <span>📋 <strong id="backupCount">0</strong></span>
+    </div>
+    <div class="save-actions">
+      <button class="btn btn-sm btn-backup" onclick="createBackupNow()">💾 نسخة</button>
+      <button class="btn btn-sm btn-restore" onclick="openRestoreModal()">🔄 استعادة</button>
+      <button class="btn btn-sm btn-settings" onclick="openSettingsModal()">⚙️</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat-card budget"><h3>💰 الميزانية</h3><div class="value" id="totalBudget">0 د.أ</div><div class="sub" id="budgetSub">لم تحدد</div></div>
+    <div class="stat-card spent"><h3>📉 المصروفات</h3><div class="value" id="totalSpent">0 د.أ</div><div class="sub" id="spentPercent">0%</div></div>
+    <div class="stat-card remaining"><h3>✅ المتبقي</h3><div class="value" id="totalRemaining">0 د.أ</div><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div></div>
+    <div class="stat-card cash"><h3>💵 النقد</h3><div class="value" id="totalCash">0 د.أ</div><div class="sub" id="cashSub">0</div></div>
+    <div class="stat-card credit"><h3>📋 الذمم</h3><div class="value" id="totalCredit">0 د.أ</div><div class="sub" id="creditSub">0</div></div>
+    <div class="stat-card check"><h3>🏦 الشيكات</h3><div class="value" id="totalCheck">0 د.أ</div><div class="sub" id="checkSub">0</div></div>
+    <div class="stat-card overdue"><h3>⚠️ متأخرة</h3><div class="value" id="totalOverdue">0 د.أ</div><div class="sub" id="overdueSub">0</div></div>
+  </div>
+  <div class="main-grid">
+    <div>
+      <div class="card">
+        <h2>➕ إضافة مصروف</h2>
+        <form id="expenseForm">
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>التصنيف (اكتب)</label>
+              <input type="text" id="category" placeholder="مثال: مواد بناء" list="categoryList" required>
+              <datalist id="categoryList"></datalist>
+            </div>
+            <div class="form-group"><label>المبلغ (د.أ)</label><input type="number" id="amount" step="0.01" min="0" required placeholder="0.000"></div>
+            <div class="form-group"><label>التاريخ</label><input type="date" id="date" required></div>
+          </div>
+          <!-- ✅ خانة رقم الكشف الجديدة -->
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>📑 رقم الكشف (اختياري)</label>
+              <input type="text" id="generalStmtNumber" placeholder="مثال: 1392 أو 7">
+            </div>
+            <div class="form-group">
+              <label>طريقة الدفع *</label>
+              <select id="paymentMethod" required onchange="togglePaymentFields()">
+                <option value="cash">💵 نقد</option>
+                <option value="credit">📋 ذمم (آجل)</option>
+                <option value="check">🏦 شيك</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>👤 اسم الدافع *</label>
+              <input type="text" id="payerName" placeholder="اسم من قام بالدفع" required list="payersList">
+              <datalist id="payersList"></datalist>
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group"><label>رقم الفاتورة</label><input type="text" id="invoiceNo" placeholder="اختياري"></div>
+            <div class="form-group">
+              <label>📄 نوع الكشف (اختياري)</label>
+              <select id="statementType" onchange="toggleStatementFields()">
+                <option value="">-- بدون كشف --</option>
+                <option value="1">📄 كشف استلام اتعاب مقاول</option>
+                <option value="2">💳 كشف دفعات المقاولين</option>
+                <!-- ✅ تم تغيير الاسم هنا -->
+                <option value="3">🏢 كشف مشروع</option>
+              </select>
+            </div>
+            <div class="form-group"></div>
+          </div>
+          <div class="conditional-fields" id="creditFields"><h4>📋 بيانات الذمة</h4><div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="dueDate"></div></div>
+          <div class="conditional-fields" id="checkFields">
+            <h4>🏦 بيانات الشيك</h4>
+            <div class="form-row">
+              <div class="form-group"><label>رقم الشيك</label><input type="text" id="checkNumber" placeholder="123456"></div>
+              <div class="form-group"><label>اسم البنك</label><input type="text" id="bankName" placeholder="البنك"></div>
+            </div>
+            <div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="checkDueDate"></div>
+          </div>
+          <div class="statement-fields" id="statementFields">
+            <h4>📄 بيانات كشف استلام اتعاب مقاول</h4>
+            <div class="form-row">
+              <div class="form-group"><label>📑 رقم الكشف الخاص بالاستلام</label><input type="text" id="stmtContractorStmtNum" placeholder="مثال: S-001"></div>
+              <div class="form-group"><label>اسم المقاول</label><input type="text" id="stmtContractor" placeholder="مثال: محمد راشد"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>رقم المشروع</label><input type="text" id="stmtProjectNo" placeholder="مثال: 1"></div>
+              <div class="form-group"><label>اسم المشروع</label><input type="text" id="stmtProjectName" placeholder="مثال: الضياء"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>قيمة العقد</label><input type="number" id="stmtContractValue" step="0.01" min="0" placeholder="0.000"></div>
+              <div class="form-group"></div>
+            </div>
+          </div>
+          <div class="payment-stmt-fields" id="paymentStmtFields">
+            <h4>💳 بيانات كشف دفعات المقاولين</h4>
+            <div class="form-row">
+              <div class="form-group"><label>📑 رقم الكشف الخاص بالدفعات</label><input type="text" id="payStmtContractorStmtNum" placeholder="مثال: P-001"></div>
+              <div class="form-group"><label>اسم المشروع</label><input type="text" id="payStmtProjectName" placeholder="مثال: الضياء"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>رقم القطعة</label><input type="text" id="payStmtPieceNo" placeholder="مثال: 1392"></div>
+              <div class="form-group"><label>نوع العمل</label><input type="text" id="payStmtWorkType" placeholder="مثال: صحي"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>مدفوع من</label><input type="text" id="payStmtPaidFrom" placeholder="مثال: نقد / شيك"></div>
+              <div class="form-group"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>من تاريخ</label><input type="date" id="payStmtFromDate"></div>
+              <div class="form-group"><label>إلى تاريخ</label><input type="date" id="payStmtToDate"></div>
+            </div>
+          </div>
+          <!-- ✅ تم تغيير القسم بالكامل -->
+          <div class="project-stmt-fields" id="projectStmtFields">
+            <h4>🏢 بيانات كشف المشروع</h4>
+            <div class="form-row">
+              <div class="form-group"><label>📑 رقم الكشف الخاص بالمشروع</label><input type="text" id="prjStmtContractorStmtNum" placeholder="مثال: PRJ-001"></div>
+              <!-- ✅ حقل اسم المشروع بدل مدير المشروع -->
+              <div class="form-group"><label>🏢 اسم المشروع</label><input type="text" id="prjProjectName" placeholder="اكتب اسم المشروع" list="projectsList"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>نوع العمل / التخصص</label><input type="text" id="prjWorkType" placeholder="مثال: إشراف / تنفيذ"></div>
+              <div class="form-group"><label>مدفوع من</label><input type="text" id="prjPaidFrom" placeholder="مثال: نقد / شيك / تحويل"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>من تاريخ</label><input type="date" id="prjFromDate"></div>
+              <div class="form-group"><label>إلى تاريخ</label><input type="date" id="prjToDate"></div>
+            </div>
+          </div>
+          <div class="form-group"><label>الوصف / البيان</label><input type="text" id="description" placeholder="مثال: 50 كيس أسمنت" required></div>
+          <div class="form-row">
+            <div class="form-group"><label>المورد / من حساب</label><input type="text" id="supplier" placeholder="اسم المورد أو الحساب"></div>
+            <div class="form-group"><label>ملاحظات</label><input type="text" id="notes" placeholder="ملاحظات..."></div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">➕ إضافة</button>
+        </form>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>📋 سجل المصروفات العامة</h2>
+        <div class="actions">
+          <button class="btn btn-pdf btn-sm" onclick="exportAllToPDF()">📄 PDF</button>
+          <button class="btn btn-excel btn-sm" onclick="exportToExcel()">📊 Excel</button>
+          <button class="btn btn-import btn-sm" onclick="document.getElementById('importExcelFile').click()">📥 استيراد Excel</button>
+          <input type="file" id="importExcelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFromExcel(event)">
+          <button class="btn btn-export btn-sm" onclick="exportData()">📤 JSON</button>
+          <button class="btn btn-import btn-sm" onclick="document.getElementById('importFile').click()">📥 JSON</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+          <button class="btn btn-print btn-sm" onclick="openReportModal()">🖨️ طباعة / تقرير</button>
+          <button class="btn btn-delete btn-sm" onclick="clearAll()">🗑️</button>
+        </div>
+        <div class="filter-section">
+          <div class="filter-section-title">📅 فلتر التاريخ</div>
+          <div class="filter-bar" style="margin-bottom:0;">
+            <div class="date-filter"><label>من:</label><input type="date" id="filterFromDate" onchange="applyDateFilter()"></div>
+            <div class="date-filter"><label>إلى:</label><input type="date" id="filterToDate" onchange="applyDateFilter()"></div>
+            <button class="btn btn-sm btn-clear-filter" onclick="clearDateFilter()">🗑️ مسح الفلتر</button>
+            <span id="dateFilterInfo" style="font-size:11px; color:#5c6bc0; margin-right:auto;"></span>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="searchInput" placeholder="🔍 بحث..." oninput="renderTable()" style="flex:1;">
+          <select id="filterCategory" onchange="renderTable()"><option value="">كل التصنيفات</option></select>
+          <select id="filterPayment" onchange="renderTable()">
+            <option value="">كل الدفع</option><option value="cash">💵 نقد</option>
+            <option value="credit">📋 ذمم</option><option value="check">🏦 شيك</option>
+          </select>
+          <select id="filterPayer" onchange="renderTable()"><option value="">كل الدافعين</option></select>
+          <select id="filterStatus" onchange="renderTable()">
+            <option value="">كل الحالات</option><option value="paid">✅ مدفوع</option>
+            <option value="pending">⏳ معلّق</option><option value="overdue">⚠️ متأخر</option>
+          </select>
+          <!-- ✅ فلتر رقم الكشف الجديد -->
+          <select id="filterStmtNumber" onchange="renderTable()"><option value="">كل أرقام الكشف</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الرقم</th><th>رقم الكشف</th><th>البيان</th><th>المبلغ</th><th>من حساب</th><th>مدفوع من</th><th>التاريخ</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
+            <tbody id="expensesTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📄 كشف استلام اتعاب المقاول</h2>
+        <div class="actions">
+          <button class="btn btn-print btn-sm" onclick="printStatement()">🖨️ طباعة الكشف</button>
+          <button class="btn btn-excel btn-sm" onclick="exportStatementToExcel()">📤 تصدير Excel</button>
+          <button class="btn btn-import btn-sm" onclick="document.getElementById('importStmtExcel').click()">📥 استيراد Excel</button>
+          <input type="file" id="importStmtExcel" accept=".xlsx,.xls,.csv" style="display:none" onchange="importStatementFromExcel('1', event)">
+          <button class="btn btn-delete btn-sm" onclick="clearStatement()">🗑️ مسح الكشف</button>
+        </div>
+        <div class="filter-section">
+          <div class="filter-section-title">📅 فلتر التاريخ</div>
+          <div class="filter-bar" style="margin-bottom:0;">
+            <div class="date-filter"><label>من:</label><input type="date" id="stmtFromDate" onchange="renderStatementTable()"></div>
+            <div class="date-filter"><label>إلى:</label><input type="date" id="stmtToDate" onchange="renderStatementTable()"></div>
+            <button class="btn btn-sm btn-clear-filter" onclick="clearStmtDateFilter()">🗑️ مسح</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select id="filterStmtContractor" onchange="renderStatementTable()"><option value="">كل المقاولين</option></select>
+          <select id="filterStmtProject" onchange="renderStatementTable()"><option value="">كل المشاريع</option></select>
+          <!-- ✅ فلتر رقم الكشف لكشف الاستلام -->
+          <select id="filterStmtNumForStmt1" onchange="renderStatementTable()"><option value="">كل الأرقام</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الرقم</th><th>رقم الكشف</th><th>البيان</th><th>المبلغ</th><th>قيمة العقد</th><th>التاريخ</th><th>المقاول</th><th>المشروع</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
+            <tbody id="statementTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>💳 كشف دفعات المقاولين</h2>
+        <div class="actions">
+          <button class="btn btn-print btn-sm" onclick="printPaymentStatement()">🖨️ طباعة الكشف</button>
+          <button class="btn btn-excel btn-sm" onclick="exportPaymentStatementToExcel()">📤 تصدير Excel</button>
+          <button class="btn btn-import btn-sm" onclick="document.getElementById('importPayStmtExcel').click()">📥 استيراد Excel</button>
+          <input type="file" id="importPayStmtExcel" accept=".xlsx,.xls,.csv" style="display:none" onchange="importStatementFromExcel('2', event)">
+          <button class="btn btn-delete btn-sm" onclick="clearPaymentStatement()">🗑️ مسح الكشف</button>
+        </div>
+        <div class="filter-section">
+          <div class="filter-section-title">📅 فلتر التاريخ</div>
+          <div class="filter-bar" style="margin-bottom:0;">
+            <div class="date-filter"><label>من:</label><input type="date" id="payStmtFromDate" onchange="renderPaymentStatementTable()"></div>
+            <div class="date-filter"><label>إلى:</label><input type="date" id="payStmtToDate" onchange="renderPaymentStatementTable()"></div>
+            <button class="btn btn-sm btn-clear-filter" onclick="clearPayStmtDateFilter()">🗑️ مسح</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select id="filterPayStmtProject" onchange="renderPaymentStatementTable()"><option value="">كل المشاريع</option></select>
+          <select id="filterPayStmtWorkType" onchange="renderPaymentStatementTable()"><option value="">كل أنواع العمل</option></select>
+          <!-- ✅ فلتر رقم الكشف لدفعات المقاولين -->
+          <select id="filterStmtNumForStmt2" onchange="renderPaymentStatementTable()"><option value="">كل الأرقام</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الرقم</th><th>رقم الكشف</th><th>البيان</th><th>المبلغ</th><th>مدفوع من</th><th>التاريخ</th><th>المشروع</th><th>نوع العمل</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
+            <tbody id="paymentStatementTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- ✅ تم تغيير العنوان والجدول بالكامل -->
+      <div class="card">
+        <h2>🏢 كشف المشروع</h2>
+        <div class="actions">
+          <button class="btn btn-print btn-sm" onclick="printProjectStatement()">🖨️ طباعة الكشف</button>
+          <button class="btn btn-excel btn-sm" onclick="exportProjectToExcel()">📤 تصدير Excel</button>
+          <button class="btn btn-import btn-sm" onclick="document.getElementById('importProjectExcel').click()">📥 استيراد Excel</button>
+          <input type="file" id="importProjectExcel" accept=".xlsx,.xls,.csv" style="display:none" onchange="importStatementFromExcel('3', event)">
+          <button class="btn btn-delete btn-sm" onclick="clearProjectStatement()">🗑️ مسح الكشف</button>
+        </div>
+        <div class="filter-section">
+          <div class="filter-section-title">📅 فلتر التاريخ</div>
+          <div class="filter-bar" style="margin-bottom:0;">
+            <div class="date-filter"><label>من:</label><input type="date" id="prjFromDate" onchange="renderProjectTable()"></div>
+            <div class="date-filter"><label>إلى:</label><input type="date" id="prjToDate" onchange="renderProjectTable()"></div>
+            <button class="btn btn-sm btn-clear-filter" onclick="clearPrjDateFilter()">🗑️ مسح</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <!-- ✅ تم تغيير الفلتر ليصبح حسب المشروع وليس المدير -->
+          <select id="filterPrjProject" onchange="renderProjectTable()"><option value="">كل المشاريع</option></select>
+          <select id="filterPrjWorkType" onchange="renderProjectTable()"><option value="">كل أنواع العمل</option></select>
+          <!-- ✅ فلتر رقم الكشف للمشروع -->
+          <select id="filterStmtNumForStmt3" onchange="renderProjectTable()"><option value="">كل الأرقام</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الرقم</th><th>رقم الكشف</th><th>البيان</th><th>المبلغ</th><th>مدفوع من</th><th>التاريخ</th><th>المشروع</th><th>نوع العمل</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
+            <tbody id="projectTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card print-area">
+        <h2>📊 الرسوم البيانية</h2>
+        <div class="charts-grid">
+          <div><h3 style="font-size:13px; color:#555; margin-bottom:8px;">طرق الدفع</h3><div class="chart-container"><canvas id="pieChart"></canvas></div></div>
+          <div><h3 style="font-size:13px; color:#555; margin-bottom:8px;">عبر الزمن</h3><div class="chart-container"><canvas id="lineChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>تطبيق مصاريف الإنشاءات - يعمل بدون إنترنت ☁️</footer>
+</div>
+
+<!-- Modal التقرير -->
+<div class="modal" id="reportModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 style="color:#1e3c72">🖨️ طباعة / تقرير المصروفات</h2>
+      <button class="close-btn" onclick="closeModal('reportModal')">×</button>
+    </div>
+    <div class="report-date-filter">
+      <h4>📅 اختر فترة التقرير</h4>
+      <div class="date-row">
+        <label>من تاريخ:</label><input type="date" id="reportFromDate">
+        <label>إلى تاريخ:</label><input type="date" id="reportToDate">
+      </div>
+      <!-- ✅ إضافة فلتر رقم الكشف هنا -->
+      <div class="date-row" style="margin-top:10px;">
+        <label>📑 رقم الكشف:</label>
+        <select id="reportStmtNumberFilter" style="min-width:150px;"><option value="">كل الأرقام</option></select>
+      </div>
+      <p style="font-size:11px; color:#777; margin-top:8px;">💡 اترك الحقول فارغة لعرض كل المصروفات</p>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-print" onclick="printReportWithFilter()" style="flex:1;">🖨️ طباعة التقرير</button>
+      <button class="btn btn-pdf" onclick="exportPDFWithFilter()" style="flex:1;">📄 تصدير PDF</button>
+      <button class="btn btn-excel" onclick="exportExcelWithFilter()" style="flex:1;">📊 تصدير Excel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal تعديل -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#1e3c72">تعديل المصروف</h2><button class="close-btn" onclick="closeModal('editModal')">×</button></div>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group"><label>التصنيف (اكتب)</label><input type="text" id="editCategory" list="editCategoryList" required><datalist id="editCategoryList"></datalist></div>
+        <div class="form-group"><label>المبلغ</label><input type="number" id="editAmount" step="0.01" min="0" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>التاريخ</label><input type="date" id="editDate" required></div>
+        <div class="form-group"><label>📑 رقم الكشف</label><input type="text" id="editGeneralStmtNumber" placeholder="اختياري"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>طريقة الدفع</label>
+          <select id="editPaymentMethod" required onchange="toggleEditPaymentFields()">
+            <option value="cash">💵 نقد</option><option value="credit">📋 ذمم</option><option value="check">🏦 شيك</option>
+          </select>
+        </div>
+        <div class="form-group"><label>👤 اسم الدافع</label><input type="text" id="editPayerName" placeholder="اسم من قام بالدفع" list="payersList"></div>
+      </div>
+      <div class="form-group"><label>📄 نوع الكشف</label>
+        <select id="editStatementType" onchange="toggleEditStatementFields()">
+          <option value="">-- بدون كشف --</option>
+          <option value="1">📄 كشف استلام اتعاب مقاول</option>
+          <option value="2">💳 كشف دفعات المقاولين</option>
+          <!-- ✅ تم تغيير الاسم هنا -->
+          <option value="3">🏢 كشف مشروع</option>
+        </select>
+      </div>
+      <div class="conditional-fields" id="editCreditFields"><div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="editDueDate"></div></div>
+      <div class="conditional-fields" id="editCheckFields">
+        <div class="form-row">
+          <div class="form-group"><label>رقم الشيك</label><input type="text" id="editCheckNumber"></div>
+          <div class="form-group"><label>البنك</label><input type="text" id="editBankName"></div>
+        </div>
+        <div class="form-group"><label>تاريخ الاستحقاق</label><input type="date" id="editCheckDueDate"></div>
+      </div>
+      <div class="statement-fields" id="editStatementFields">
+        <h4>📄 بيانات كشف استلام اتعاب</h4>
+        <div class="form-row">
+          <div class="form-group"><label>📑 رقم الكشف الخاص بالاستلام</label><input type="text" id="editStmtContractorStmtNum"></div>
+          <div class="form-group"><label>اسم المقاول</label><input type="text" id="editStmtContractor"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>رقم المشروع</label><input type="text" id="editStmtProjectNo"></div>
+          <div class="form-group"><label>اسم المشروع</label><input type="text" id="editStmtProjectName"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>قيمة العقد</label><input type="number" id="editStmtContractValue" step="0.01" min="0"></div>
+          <div class="form-group"></div>
+        </div>
+      </div>
+      <div class="payment-stmt-fields" id="editPaymentStmtFields">
+        <h4>💳 بيانات كشف دفعات</h4>
+        <div class="form-row">
+          <div class="form-group"><label>📑 رقم الكشف الخاص بالدفعات</label><input type="text" id="editPayStmtContractorStmtNum"></div>
+          <div class="form-group"><label>اسم المشروع</label><input type="text" id="editPayStmtProjectName"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>رقم القطعة</label><input type="text" id="editPayStmtPieceNo"></div>
+          <div class="form-group"><label>نوع العمل</label><input type="text" id="editPayStmtWorkType"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>مدفوع من</label><input type="text" id="editPayStmtPaidFrom"></div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>من تاريخ</label><input type="date" id="editPayStmtFromDate"></div>
+          <div class="form-group"><label>إلى تاريخ</label><input type="date" id="editPayStmtToDate"></div>
+        </div>
+      </div>
+      <!-- ✅ تم تغيير قسم التعديل بالكامل -->
+      <div class="project-stmt-fields" id="editProjectStmtFields">
+        <h4>🏢 بيانات كشف المشروع</h4>
+        <div class="form-row">
+          <div class="form-group"><label>📑 رقم الكشف الخاص بالمشروع</label><input type="text" id="editPrjStmtContractorStmtNum"></div>
+          <!-- ✅ حقل اسم المشروع بدل مدير المشروع -->
+          <div class="form-group"><label>🏢 اسم المشروع</label><input type="text" id="editPrjProjectName" list="projectsList"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>نوع العمل / التخصص</label><input type="text" id="editPrjWorkType"></div>
+          <div class="form-group"><label>مدفوع من</label><input type="text" id="editPrjPaidFrom"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>من تاريخ</label><input type="date" id="editPrjFromDate"></div>
+          <div class="form-group"><label>إلى تاريخ</label><input type="date" id="editPrjToDate"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>الحالة</label>
+        <select id="editPaymentStatus"><option value="paid">✅ مدفوع</option><option value="pending">⏳ معلّق</option><option value="overdue">⚠️ متأخر</option></select>
+      </div>
+      <div class="form-group"><label>الوصف / البيان</label><input type="text" id="editDescription" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>من حساب / المورد</label><input type="text" id="editSupplier"></div>
+        <div class="form-group"><label>رقم الفاتورة</label><input type="text" id="editInvoiceNo"></div>
+      </div>
+      <div class="form-group"><label>ملاحظات</label><textarea id="editNotes" rows="2"></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">💾 حفظ</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal إعداد المزامنة Neon -->
+<div class="modal" id="cloudSetupModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#1e3c72">☁️ إعداد المزامنة (Neon)</h2><button class="close-btn" onclick="closeModal('cloudSetupModal')">×</button></div>
+    <div class="cloud-setup">
+      <div class="setup-steps">
+        <ol>
+          <li>ادخل إلى <a href="https://console.neon.tech" target="_blank">console.neon.tech</a></li>
+          <li>افتح مشروع <strong>lively-smoke-98669962</strong></li>
+          <li>اضغط زر <strong>Connect</strong> في الأعلى</li>
+          <li>انسخ السطر الذي يبدأ بـ <code>postgresql://</code></li>
+          <li>الصقه في الحقل أدناه واضغط "حفظ وتفعيل"</li>
+        </ol>
+      </div>
+      <div class="neon-box">
+        <h4>🗄️ Neon Database - مجاني ومفتوح المصدر</h4>
+        <p>500 ميجابايت تخزين مجاني - لا حدود للطلبات - الجدول يُنشأ تلقائياَ!</p>
+        <button class="btn" onclick="testConnection()" id="testConnBtn2">🔍 اختبار الاتصال</button>
+        <div id="testResult" style="margin-top:10px;"></div>
+      </div>
+      <div class="qr-share-box" id="qrShareBox" style="display:none;">
+        <h4>📱 مشاركة عبر QR</h4>
+        <p>انقل الإعدادات للتلفون!</p>
+        <button class="btn" onclick="openQRModal()">📱 عرض QR</button>
+        <button class="btn" onclick="openScanModal()">📷 مسح QR</button>
+      </div>
+      <div class="form-group"><label>🔗 Connection String (رابط الاتصال)</label><input type="password" id="neonConnStr" placeholder="postgresql://neondb_owner:...@ep-...neon.tech/neondb?sslmode=require"></div>
+      <div class="form-group"><label>📝 معرّف المشروع (ثابت)</label><input type="text" id="neonProjectId" value="construction-main" placeholder="construction-main"></div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn btn-primary" onclick="saveCloudConfig()" style="flex:1;" id="saveCloudBtn">✅ حفظ وتفعيل</button>
+        <button class="btn btn-delete" onclick="disconnectCloud()" style="flex:1;">🔌 قطع</button>
+      </div>
+      <div class="error-details" id="errorHelp" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal QR -->
+<div class="modal" id="qrModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#e91e63">📱 مشاركة الإعدادات</h2><button class="close-btn" onclick="closeQRModal()">×</button></div>
+    <div class="qr-display-area">
+      <h4>امسح من التلفون</h4>
+      <div id="qrcode"></div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-sm btn-export" onclick="downloadQR()">📥 تحميل</button>
+        <button class="btn btn-sm btn-export" onclick="copyQRText()">📋 نسخ</button>
+      </div>
+    </div>
+    <div style="background:#fff3cd; padding:8px; border-radius:8px; margin-top:12px; border-right:4px solid #ff9800; font-size:11px; color:#856404;">
+      <strong>⚠️ تنبيه:</strong> الكود يحتوي كلمة مرور قاعدة البيانات. لا تشاركه مع غير الموثوقين.
+    </div>
+  </div>
+</div>
+
+<!-- Modal مسح QR -->
+<div class="modal" id="scanModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#00bcd4">📷 مسح QR</h2><button class="close-btn" onclick="closeScanModal()">×</button></div>
+    <div style="text-align:center;">
+      <p style="margin-bottom:12px; color:#555; font-size:13px;">وجّه الكاميرا نحو QR Code</p>
+      <div id="qr-reader"></div>
+      <div id="scanStatus" class="scan-status" style="display:none;"></div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-sm" style="background:#00bcd4; color:#fff;" onclick="startScanner()">🎥 تشغيل</button>
+        <button class="btn btn-sm btn-delete" onclick="stopScanner()">⏹️ إيقاف</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal سجل المزامنة -->
+<div class="modal" id="syncLogModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#1e3c72">📋 سجل المزامنة</h2><button class="close-btn" onclick="closeModal('syncLogModal')">×</button></div>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button class="btn btn-sm btn-delete" onclick="clearSyncLog()">🗑️ مسح</button>
+    </div>
+    <div id="syncLogContent" style="background:#1e1e1e; color:#d4d4d4; padding:10px; border-radius:8px; font-family:monospace; font-size:10px; max-height:280px; overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Modal استعادة -->
+<div class="modal" id="restoreModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#1e3c72">🔄 استعادة</h2><button class="close-btn" onclick="closeModal('restoreModal')">×</button></div>
+    <div style="background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:12px; border-right:4px solid #f39c12; font-size:12px;">
+      <strong style="color:#856404;">⚠️ تنبيه:</strong> سيستبدل البيانات الحالية.
+    </div>
+    <div class="form-group">
+      <label>📥 من ملف JSON</label>
+      <input type="file" id="restoreFile" accept=".json" style="padding:8px;">
+      <button class="btn btn-sm btn-import" onclick="restoreFromFile()" style="margin-top:8px; width:100%;">📂 استيراد</button>
+    </div>
+    <hr style="margin:15px 0; border:none; border-top:1px dashed #ddd;">
+    <h3 style="color:#1e3c72; font-size:14px; margin-bottom:8px;">📚 النسخ الاحتياطية</h3>
+    <div id="backupList" class="backup-list"></div>
+  </div>
+</div>
+
+<!-- Modal إعدادات -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 style="color:#1e3c72">⚙️ الإعدادات</h2><button class="close-btn" onclick="closeModal('settingsModal')">×</button></div>
+    <div class="settings-grid">
+      <div class="setting-item"><div><div class="label">💾 حفظ تلقائي</div><div class="desc">كل 30 ثانية</div></div><label class="toggle"><input type="checkbox" id="settingAutoSave" checked onchange="updateSettings()"><span class="slider"></span></label></div>
+      <div class="setting-item"><div><div class="label">☁️ مزامنة تلقائية</div><div class="desc">رفع للسحابة</div></div><label class="toggle"><input type="checkbox" id="settingCloudSync" checked onchange="updateSettings()"><span class="slider"></span></label></div>
+      <div class="setting-item"><div><div class="label">🔄 نسخ دوري</div><div class="desc">كل 10 دقائق</div></div><label class="toggle"><input type="checkbox" id="settingPeriodicBackup" checked onchange="updateSettings()"><span class="slider"></span></label></div>
+      <div class="setting-item"><div><div class="label">🔔 تنبيهات</div><div class="desc">رسائل التأكيد</div></div><label class="toggle"><input type="checkbox" id="settingNotifications" checked onchange="updateSettings()"><span class="slider"></span></label></div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-sm btn-backup" onclick="createBackupNow(); closeModal('settingsModal');" style="flex:1;">💾 نسخة الآن</button>
+      <button class="btn btn-sm btn-delete" onclick="clearAllBackups()" style="flex:1;">🗑️ حذف الكل</button>
+    </div>
+  </div>
+</div>
+
+<div class="invoice-wrapper" id="invoiceWrapper">
+  <div class="invoice" id="invoiceContent"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'construction_app_final_v29';
+const BACKUPS_KEY = 'construction_backups_final_v29';
+const SETTINGS_KEY = 'construction_settings_final_v29';
+const CLOUD_CONFIG_KEY = 'construction_cloud_final_v29';
+const SYNC_LOG_KEY = 'construction_sync_log_final_v29';
+
+const PAYMENT_LABELS = { cash:'💵 نقد', credit:'📋 ذمم', check:'🏦 شيك' };
+const STATUS_LABELS = { paid:'✅ مدفوع', pending:'⏳ معلّق', overdue:'⚠️ متأخر' };
+// ✅ تم تحديث الملصقات
+const STMT_TYPE_LABELS = { '': 'بدون', '1': '📄 استلام', '2': '💳 دفعات', '3': '🏢 مشروع' };
+const DEFAULT_SETTINGS = { autoSave: true, cloudSync: true, periodicBackup: true, notifications: true, maxBackups: 5 };
+
+let data = loadData();
+let settings = loadSettings();
+let cloudConfig = loadCloudConfig();
+let syncLog = loadSyncLog();
+let autoSaveTimer = null, periodicBackupTimer = null, syncInProgress = false;
+let html5QrCode = null, qrCodeInstance = null;
+let retryCount = 0;
+const MAX_RETRIES = 3;
+
+// ========== أدوات عامة ==========
+function normalizeDate(dateStr){
+  if(!dateStr) return '';
+  if(dateStr instanceof Date) return dateStr.toISOString().split('T')[0];
+  if(typeof dateStr === 'number'){ const excelDate = new Date((dateStr - 25569) * 86400 * 1000); return excelDate.toISOString().split('T')[0]; }
+  const str = String(dateStr).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(dmy){ return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`; }
+  const ymd = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if(ymd){ return `${ymd[1]}-${ymd[2].padStart(2,'0')}-${ymd[3].padStart(2,'0')}`; }
+  const parsed = new Date(str);
+  if(!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+  return str;
+}
+
+function formatDateDisplay(dateStr){
+  if(!dateStr) return '';
+  const normalized = normalizeDate(dateStr);
+  if(!normalized) return '';
+  const parts = normalized.split('-');
+  if(parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function sortExpensesByDate(arr){
+  return [...arr].sort((a, b) => {
+    const dateA = normalizeDate(a.date) || '';
+    const dateB = normalizeDate(b.date) || '';
+    if(dateB > dateA) return 1;
+    if(dateB < dateA) return -1;
+    return (b.id || 0) - (a.id || 0);
+  });
+}
+
+// ✅ جلب رقم الكشف المناسب لكل مصروف (مع معالجة آمنة للأخطاء)
+function getExpenseStmtNumber(e){
+  // الأولوية للحقل العام الجديد - تأكد أنه نص قبل استخدام trim
+  if(e.generalStmtNumber != null && e.generalStmtNumber !== '') {
+    const val = String(e.generalStmtNumber).trim();
+    if(val) return val;
+  }
+  // ثم حسب نوع الكشف
+  if(e.statementType === '1') return e.stmtContractorStmtNum ? String(e.stmtContractorStmtNum).trim() : '-';
+  if(e.statementType === '2') return e.payStmtContractorStmtNum ? String(e.payStmtContractorStmtNum).trim() : '-';
+  // ✅ تم تحديث المرجع لحقول كشف المشروع
+  if(e.statementType === '3') return e.prjStmtContractorStmtNum ? String(e.prjStmtContractorStmtNum).trim() : '-';
+  return '-';
+}
+
+function loadData(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const d = JSON.parse(saved);
+      d.expenses = (d.expenses || []).map(e => ({
+        ...e, paymentMethod: e.paymentMethod || 'cash',
+        paymentStatus: e.paymentStatus || (e.paymentMethod === 'cash' ? 'paid' : 'pending'),
+        payerName: e.payerName || '', statementType: e.statementType || '',
+        generalStmtNumber: e.generalStmtNumber != null ? String(e.generalStmtNumber) : '',
+        stmtContractor: e.stmtContractor || '', stmtProjectNo: e.stmtProjectNo || '',
+        stmtProjectName: e.stmtProjectName || '', 
+        stmtContractorStmtNum: e.stmtContractorStmtNum != null ? String(e.stmtContractorStmtNum) : '',
+        payStmtContractorStmtNum: e.payStmtContractorStmtNum != null ? String(e.payStmtContractorStmtNum) : '',
+        prjStmtContractorStmtNum: e.prjStmtContractorStmtNum != null ? String(e.prjStmtContractorStmtNum) : '',
+        stmtContractValue: e.stmtContractValue || 0,
+        payStmtProjectName: e.payStmtProjectName || '',
+        payStmtPieceNo: e.payStmtPieceNo || '', payStmtWorkType: e.payStmtWorkType || '',
+        payStmtFromDate: e.payStmtFromDate || '', payStmtToDate: e.payStmtToDate || '',
+        payStmtPaidFrom: e.payStmtPaidFrom || '',
+        // ✅ حقول كشف المشروع الجديدة
+        prjProjectName: e.prjProjectName || e.directorProjectName || '', // توافق مع القديم
+        prjWorkType: e.prjWorkType || e.directorWorkType || '',           // توافق مع القديم
+        prjFromDate: e.prjFromDate || e.directorFromDate || '',           // توافق مع القديم
+        prjToDate: e.prjToDate || e.directorToDate || '',                 // توافق مع القديم
+        prjPaidFrom: e.prjPaidFrom || e.directorPaidFrom || '',           // توافق مع القديم
+        
+        dueDate: normalizeDate(e.dueDate) || '', checkNumber: e.checkNumber || '', bankName: e.bankName || '',
+        checkDueDate: normalizeDate(e.checkDueDate) || '', paidDate: normalizeDate(e.paidDate) || '',
+        date: normalizeDate(e.date) || ''
+      }));
+      d.expenses = sortExpensesByDate(d.expenses);
+      return d;
+    }
+  } catch(e) { addSyncLog('خطأ تحميل محلي', 'error'); }
+  return { project:{name:'', budget:0}, expenses:[], lastSaved:null, lastSync:null };
+}
+
+function loadSettings(){ try { const s = localStorage.getItem(SETTINGS_KEY); return s ? {...DEFAULT_SETTINGS, ...JSON.parse(s)} : {...DEFAULT_SETTINGS}; } catch(e){} return {...DEFAULT_SETTINGS}; }
+function loadCloudConfig(){ try { const s = localStorage.getItem(CLOUD_CONFIG_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+function loadSyncLog(){ try { const s = localStorage.getItem(SYNC_LOG_KEY); return s ? JSON.parse(s) : []; } catch(e){ return []; } }
+
+function addSyncLog(message, type = 'info'){
+  const entry = { time: new Date().toISOString(), message, type };
+  syncLog.unshift(entry);
+  if(syncLog.length > 100) syncLog = syncLog.slice(0, 100);
+  try { localStorage.setItem(SYNC_LOG_KEY, JSON.stringify(syncLog)); } catch(e) {}
+  renderSyncLog();
+}
+
+function renderSyncLog(){
+  const container = document.getElementById('syncLogContent');
+  if(!container) return;
+  if(syncLog.length === 0){ container.innerHTML = '<div style="color:#858585;">السجل فارغ</div>'; return; }
+  container.innerHTML = syncLog.slice(0, 50).map(entry => {
+    const time = new Date(entry.time).toLocaleTimeString('en-US');
+    const colors = { info:'#4ec9b0', success:'#6a9955', error:'#f48771', warn:'#dcdcaa' };
+    return `<div style="margin-bottom:3px;"><span style="color:#858585;">[${time}]</span> <span style="color:${colors[entry.type] || '#4ec9b0'};">${entry.message}</span></div>`;
+  }).join('');
+}
+
+function clearSyncLog(){ syncLog = []; localStorage.setItem(SYNC_LOG_KEY, JSON.stringify(syncLog)); renderSyncLog(); showToast('🗑️ تم المسح', 'info'); }
+
+// ========== ✅ Neon عبر WebSocket + HTTP fallback ==========
+let neonQueryFn = null;
+
+function cleanConnString(str){
+  return String(str).trim()
+    .replace(/([?&])channel_binding=require&?/g, '$1')
+    .replace(/\?&/g, '?')
+    .replace(/[?&]$/g, '');
+}
+
+async function ensureNeonDriver(){
+  if (neonQueryFn) return neonQueryFn;
+  if(!cloudConfig || !cloudConfig.conn) throw new Error('لم يتم ضبط الاتصال بعد');
+  const conn = cleanConnString(cloudConfig.conn);
+  let mod;
+  try {
+    mod = await import('https://cdn.jsdelivr.net/npm/@neondatabase/serverless@0.10.4/+esm');
+  } catch(e1) {
+    mod = await import('https://esm.sh/@neondatabase/serverless@0.10.4');
+  }
+  const neon = mod.neon;
+  neonQueryFn = neon(conn, { fullResults: true });
+  return neonQueryFn;
+}
+
+async function neonSQL(query, params = []){
+  try {
+    const fn = await ensureNeonDriver();
+    return await fn(query, params);
+  } catch(driverErr){
+    const u = new URL(cleanConnString(cloudConfig.conn));
+    const res = await fetch(`https://${u.host}/sql`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json',
+        'Authorization':'Basic ' + btoa(unescape(encodeURIComponent(u.username + ':' + u.password))) },
+      body: JSON.stringify({ query, params })
+    });
+    if(!res.ok){ const t = await res.text().catch(()=> ''); throw new Error(`Neon HTTP ${res.status}: ${t.slice(0,200)}`); }
+    return await res.json();
+  }
+}
+
+async function ensureNeonTable(){
+  await neonSQL(`CREATE TABLE IF NOT EXISTS app_data (
+    project_id TEXT PRIMARY KEY,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+}
+
+async function fetchFromCloud(){
+  const r = await neonSQL('SELECT data FROM app_data WHERE project_id = $1', [cloudConfig.projectId || 'construction-main']);
+  if(r && r.rows && r.rows.length){
+    const row = r.rows[0];
+    return Array.isArray(row) ? row[0] : row.data;
+  }
+  return null;
+}
+
+async function pushToCloud(){
+  const payload = JSON.stringify(data);
+  const sizeKB = (payload.length / 1024).toFixed(2);
+  await neonSQL(
+    `INSERT INTO app_data (project_id, data, updated_at) VALUES ($1, $2::jsonb, NOW())
+     ON CONFLICT (project_id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()`,
+    [cloudConfig.projectId || 'construction-main', payload]
+  );
+  return parseFloat(sizeKB);
+}
+
+async function testConnection(){
+  const connStr = document.getElementById('neonConnStr').value.trim();
+  const resultBox = document.getElementById('testResult');
+  if(!connStr){ showToast('⚠️ أدخل Connection String أولاَ', 'warning'); return; }
+  resultBox.innerHTML = '<span class="loading-spinner"></span> جاري الاختبار...';
+  try {
+    cloudConfig = { conn: connStr, projectId: document.getElementById('neonProjectId').value.trim() || 'construction-main' };
+    neonQueryFn = null;
+    await ensureNeonTable();
+    await neonSQL('SELECT 1');
+    resultBox.innerHTML = '<div class="success-box">✅ الاتصال ناجح! الجدول جاهز.</div>';
+    showToast('✅ الاتصال بـ Neon ناجح!', 'success', 3000);
+    addSyncLog('اختبار الاتصال: ناجح ✓', 'success');
+    retryCount = 0;
+  } catch(error){
+    resultBox.innerHTML = `<div class="error-details">❌ ${error.message}</div>`;
+    showToast('❌ فشل الاتصال: ' + error.message, 'error', 5000);
+    addSyncLog('فشل الاختبار: ' + error.message, 'error');
+  }
+}
+
+async function pullFromCloud(){
+  if(syncInProgress) return;
+  syncInProgress = true;
+  updateCloudStatus('syncing', 'جاري الجلب...', 'من Neon');
+  try {
+    const remoteData = await fetchFromCloud();
+    if(remoteData && remoteData.expenses){
+      const localTime = data.lastSaved ? new Date(data.lastSaved).getTime() : 0;
+      const remoteTime = remoteData.lastSaved ? new Date(remoteData.lastSaved).getTime() : 0;
+      if(remoteTime > localTime + 1000){
+        data = remoteData;
+        data.expenses = data.expenses.map(e => ({...e, date: normalizeDate(e.date), generalStmtNumber: e.generalStmtNumber != null ? String(e.generalStmtNumber) : '', stmtContractorStmtNum: e.stmtContractorStmtNum != null ? String(e.stmtContractorStmtNum) : '', payStmtContractorStmtNum: e.payStmtContractorStmtNum != null ? String(e.payStmtContractorStmtNum) : '', prjStmtContractorStmtNum: e.prjStmtContractorStmtNum != null ? String(e.prjStmtContractorStmtNum) : ''}));
+        data.expenses = sortExpensesByDate(data.expenses);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        addSyncLog('تم التحديث من السحابة ✓', 'success');
+        renderAll();
+        showToast('☁️ تم التحديث!', 'success', 3000);
+      } else { addSyncLog('البيانات المحلية أحدث', 'info'); }
+    }
+    updateCloudStatus('success', 'متصل ✓', 'Neon DB');
+    retryCount = 0;
+  } catch(error){
+    updateCloudStatus('error', 'خطأ في المزامنة', error.message);
+    showToast('❌ فشل المزامنة: ' + error.message, 'error', 4000);
+    addSyncLog('فشل: ' + error.message, 'error');
+    retryCount++;
+  } finally { syncInProgress = false; }
+}
+
+async function pushToCloudWrapper(){
+  if(!cloudConfig || !settings.cloudSync || syncInProgress) return;
+  if(retryCount >= MAX_RETRIES){ addSyncLog('تم إيقاف المزامنة - فشل متكرر', 'warn'); return; }
+  syncInProgress = true;
+  updateCloudStatus('syncing', 'جاري الحفظ...', 'إلى Neon');
+  try {
+    data.lastSaved = new Date().toISOString();
+    const sizeKB = await pushToCloud();
+    addSyncLog(`تم الحفظ في السحابة (${sizeKB} KB) ✓`, 'success');
+    updateCloudStatus('success', 'محفوظ ✓', 'Neon DB');
+    retryCount = 0;
+  } catch(error){
+    updateCloudStatus('error', 'فشل الحفظ', error.message);
+    showToast('❌ فشل الحفظ: ' + error.message, 'error', 4000);
+    addSyncLog('فشل الحفظ: ' + error.message, 'error');
+    retryCount++;
+  } finally { syncInProgress = false; }
+}
+
+async function forceSync(){
+  if(!cloudConfig){ showToast('⚠️ المزامنة غير مفعّلة', 'warning'); openCloudSetupModal(); return; }
+  retryCount = 0;
+  showToast('🔄 جاري المزامنة...', 'info', 2000);
+  await pullFromCloud();
+  await pushToCloudWrapper();
+  if(retryCount === 0) showToast('✅ تمت المزامنة بنجاح!', 'success');
+}
+
+function updateCloudStatus(status, title, subtitle){
+  const bar = document.getElementById('cloudStatusBar');
+  const icon = document.getElementById('cloudIcon');
+  const titleEl = document.getElementById('cloudTitle');
+  const subtitleEl = document.getElementById('cloudSubtitle');
+  bar.className = 'cloud-status-bar';
+  if(status === 'disconnected') bar.classList.add('disconnected');
+  else if(status === 'syncing') bar.classList.add('syncing');
+  else if(status === 'error') bar.classList.add('error');
+  else if(status === 'success') bar.classList.add('success');
+  const icons = { connected: '☁️✅', disconnected: '☁️', syncing: '☁️🔄', error: '☁️❌', success: '☁️✅' };
+  icon.textContent = icons[status] || '☁️';
+  titleEl.textContent = title;
+  subtitleEl.textContent = subtitle;
+}
+
+async function saveCloudConfig(){
+  const connStr = document.getElementById('neonConnStr').value.trim();
+  const projectId = document.getElementById('neonProjectId').value.trim() || 'construction-main';
+  if(!connStr){ showToast('⚠️ أدخل Connection String', 'warning'); return; }
+  const saveBtn = document.getElementById('saveCloudBtn');
+  const originalText = saveBtn.textContent;
+  try {
+    saveBtn.disabled = true; saveBtn.textContent = '🔄 جاري الاختبار...'; saveBtn.style.opacity = '0.7';
+    cloudConfig = { conn: connStr, projectId };
+    neonQueryFn = null;
+    await ensureNeonTable();
+    localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+    addSyncLog('تم حفظ إعدادات Neon ✓', 'success');
+    await pullFromCloud();
+    closeModal('cloudSetupModal');
+    showToast('✅ تم تفعيل المزامنة مع Neon!', 'success');
+    document.getElementById('headerSyncBtn').style.display = 'inline-block';
+    document.getElementById('testConnBtn').style.display = 'inline-block';
+    document.getElementById('qrShareBox').style.display = 'block';
+    document.getElementById('errorHelp').style.display = 'none';
+    retryCount = 0;
+  } catch(error){
+    saveBtn.disabled = false; saveBtn.textContent = originalText; saveBtn.style.opacity = '1';
+    showToast('❌ خطأ: ' + error.message, 'error');
+    addSyncLog('فشل: ' + error.message, 'error');
+    document.getElementById('errorHelp').innerHTML = `<strong>❌ فشل الحفظ:</strong><br>${error.message}<br><br><strong>تأكد من:</strong><br>1. نسخ Connection String كاملاَ<br>2. اتصال الإنترنت يعمل`;
+    document.getElementById('errorHelp').style.display = 'block';
+  }
+}
+
+function disconnectCloud(){
+  if(!confirm('قطع الاتصال بالسحابة؟')) return;
+  localStorage.removeItem(CLOUD_CONFIG_KEY);
+  cloudConfig = null; neonQueryFn = null;
+  document.getElementById('headerSyncBtn').style.display = 'none';
+  document.getElementById('testConnBtn').style.display = 'none';
+  document.getElementById('qrShareBox').style.display = 'none';
+  updateCloudStatus('disconnected', 'غير مفعّلة', 'اضغط إعداد');
+  closeModal('cloudSetupModal');
+  showToast('🔌 تم القطع', 'info');
+  addSyncLog('تم القطع', 'warn');
+  retryCount = 0;
+}
+
+function openCloudSetupModal(){
+  if(cloudConfig){
+    document.getElementById('neonConnStr').value = cloudConfig.conn || '';
+    document.getElementById('neonProjectId').value = cloudConfig.projectId || 'construction-main';
+    document.getElementById('qrShareBox').style.display = 'block';
+    document.getElementById('testConnBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('qrShareBox').style.display = 'none';
+    document.getElementById('testConnBtn').style.display = 'none';
+  }
+  document.getElementById('errorHelp').style.display = 'none';
+  document.getElementById('cloudSetupModal').classList.add('active');
+}
+
+function openQRModal(){
+  if(!cloudConfig){ showToast('⚠️ لا توجد إعدادات', 'warning'); return; }
+  document.getElementById('qrModal').classList.add('active');
+  const qrContainer = document.getElementById('qrcode');
+  qrContainer.innerHTML = '';
+  const qrData = { type: 'construction-app-sync', v: 3, conn: cloudConfig.conn, pid: cloudConfig.projectId };
+  try {
+    qrCodeInstance = new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 250, height: 250, colorDark: '#1e3c72', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    addSyncLog('تم إنشاء QR', 'info');
+  } catch(e){ showToast('❌ فشل QR', 'error'); }
+}
+
+function closeQRModal(){ document.getElementById('qrModal').classList.remove('active'); }
+
+function downloadQR(){
+  const qrCanvas = document.querySelector('#qrcode canvas');
+  if(qrCanvas){ const a = document.createElement('a'); a.href = qrCanvas.toDataURL('image/png'); a.download = `qr_sync.png`; a.click(); showToast('📥 تم التحميل', 'success'); }
+  else { const qrImg = document.querySelector('#qrcode img'); if(qrImg){ const a = document.createElement('a'); a.href = qrImg.src; a.download = `qr_sync.png`; a.click(); showToast('📥 تم التحميل', 'success'); } }
+}
+
+function copyQRText(){
+  if(!cloudConfig) return;
+  const qrData = { type: 'construction-app-sync', v: 3, conn: cloudConfig.conn, pid: cloudConfig.projectId };
+  navigator.clipboard.writeText(JSON.stringify(qrData)).then(() => showToast('📋 تم النسخ', 'success')).catch(() => showToast('❌ فشل النسخ', 'error'));
+}
+
+function openScanModal(){ document.getElementById('scanModal').classList.add('active'); document.getElementById('scanStatus').style.display = 'none'; }
+function closeScanModal(){ stopScanner(); document.getElementById('scanModal').classList.remove('active'); }
+
+async function startScanner(){
+  const statusEl = document.getElementById('scanStatus');
+  statusEl.style.display = 'block'; statusEl.className = 'scan-status scanning'; statusEl.textContent = '🎥 جاري التشغيل...';
+  try {
+    if(html5QrCode){ await html5QrCode.stop(); html5QrCode.clear(); }
+    html5QrCode = new Html5Qrcode("qr-reader");
+    await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure);
+    statusEl.textContent = '📷 الكاميرا نشطة';
+    addSyncLog('تم تشغيل الكاميرا', 'info');
+  } catch(error){
+    statusEl.className = 'scan-status error'; statusEl.textContent = '❌ فشل: ' + error.message;
+    addSyncLog('فشل الكاميرا: ' + error.message, 'error');
+  }
+}
+
+function stopScanner(){
+  if(html5QrCode){ html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; document.getElementById('scanStatus').style.display = 'none'; }).catch(err => console.log('Stop error:', err)); }
+}
+
+function onScanSuccess(decodedText, decodedResult){
+  const statusEl = document.getElementById('scanStatus');
+  statusEl.className = 'scan-status success'; statusEl.textContent = '✅ تم المسح!';
+  try {
+    const qrData = JSON.parse(decodedText);
+    if(qrData.type !== 'construction-app-sync') throw new Error('QR غير صالح');
+    if(!qrData.conn) throw new Error('QR غير مكتمل');
+    cloudConfig = { conn: qrData.conn, projectId: qrData.pid || 'construction-main' };
+    localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+    neonQueryFn = null;
+    document.getElementById('neonConnStr').value = qrData.conn;
+    document.getElementById('neonProjectId').value = cloudConfig.projectId;
+    stopScanner(); closeScanModal(); closeModal('cloudSetupModal');
+    addSyncLog('تم استيراد من QR', 'success');
+    showToast('✅ تم الاستيراد!', 'success', 3000);
+    document.getElementById('headerSyncBtn').style.display = 'inline-block';
+    document.getElementById('testConnBtn').style.display = 'inline-block';
+    document.getElementById('qrShareBox').style.display = 'block';
+    retryCount = 0;
+    forceSync();
+  } catch(error){
+    statusEl.className = 'scan-status error'; statusEl.textContent = '❌ ' + error.message;
+    addSyncLog('فشل QR: ' + error.message, 'error');
+    showToast('❌ ' + error.message, 'error', 4000);
+  }
+}
+
+function onScanFailure(error){}
+
+// ✅✅✅ الإصلاح الجوهري لمشكلة "فشل الحفظ" - تنظيف تلقائي ذكي ✅✅✅
+function cleanupLocalStorage() {
+  try {
+    // 1. احذف جميع مفاتيح localStorage القديمة التي تبدأ بـ construction_ ولكن ليست المفاتيح الحالية
+    const keysToRemove = [];
+    for(let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if(key && key.startsWith('construction_') && 
+         key !== STORAGE_KEY && key !== BACKUPS_KEY && 
+         key !== SETTINGS_KEY && key !== CLOUD_CONFIG_KEY && 
+         key !== SYNC_LOG_KEY) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // حذف المفاتيح القديمة
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+      console.log('تم حذف مفتاح قديم:', key);
+    });
+    
+    // 2. قلل عدد النسخ الاحتياطية إلى 2 فقط لتوفير مساحة
+    const backups = getBackups();
+    if(backups.length > 2) {
+      const trimmedBackups = backups.slice(0, 2);
+      localStorage.setItem(BACKUPS_KEY, JSON.stringify(trimmedBackups));
+      console.log('تم تقليل النسخ الاحتياطية إلى 2');
+    }
+    
+    // 3. امسح سجل المزامنة إذا كان طويلاً جداً
+    if(syncLog.length > 20) {
+      syncLog = syncLog.slice(0, 20);
+      localStorage.setItem(SYNC_LOG_KEY, JSON.stringify(syncLog));
+      console.log('تم تقصير سجل المزامنة');
+    }
+    
+    return true;
+  } catch(e) {
+    console.error('خطأ في التنظيف:', e);
+    return false;
+  }
+}
+
+function saveData(showNotification = true){
+  try {
+    const indicator = document.getElementById('saveIndicator');
+    const statusText = document.getElementById('saveStatusText');
+    indicator.classList.add('saving'); statusText.textContent = 'جاري...';
+    
+    data.lastSaved = new Date().toISOString();
+    
+    // محاولة أولى: حفظ البيانات الكاملة
+    let jsonStr = JSON.stringify(data);
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, jsonStr);
+    } catch (storageError) {
+      // إذا فشلت المحاولة الأولى (QuotaExceededError)
+      if (storageError.name === 'QuotaExceededError' || storageError.code === 22 || storageError.message.includes('quota')) {
+        addSyncLog('تنبيه: امتلاء ذاكرة التخزين، جارٍ التنظيف التلقائي...', 'warn');
+        
+        // خطوة 1: نظف localStorage من البيانات القديمة
+        cleanupLocalStorage();
+        
+        // خطوة 2: أعد المحاولة بالحفظ الكامل
+        try {
+          localStorage.setItem(STORAGE_KEY, jsonStr);
+          addSyncLog('تم تحرير المساحة وحفظ البيانات بنجاح.', 'success');
+          showToast('✅ تم تنظيف الذاكرة وحفظ البيانات', 'success', 2000);
+        } catch (secondError) {
+          // خطوة 3: إذا فشل مرة أخرى، احفظ نسخة مبسطة جداً
+          const minimalData = {
+             project: data.project,
+             expenses: data.expenses.slice(-50).map(e => ({ // آخر 50 عنصر فقط
+               id: e.id, amount: e.amount, date: e.date, description: e.description
+             })),
+             lastSaved: data.lastSaved
+          };
+          
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalData));
+            addSyncLog('تم حفظ نسخة مبسطة محلياُ بسبب امتلاء الذاكرة.', 'warn');
+            showToast('⚠️ تم حفظ نسخة محدودة محلياً. البيانات الكاملة في السحابة.', 'warning', 5000);
+            
+            // حاول رفع النسخة الكاملة للسحابة فوراً
+            if(settings.cloudSync && cloudConfig) {
+              setTimeout(() => pushToCloudWrapper(), 1000);
+            }
+          } catch(finalError) {
+            throw finalError; // إذا فشل حتى الحفظ المبسط
+          }
+        }
+      } else {
+        throw storageError; // خطأ آخر غير متوقع
+      }
+    }
+
+    setTimeout(() => {
+      indicator.classList.remove('saving'); statusText.textContent = '✓ تم';
+      updateSaveInfo();
+      if(settings.cloudSync && cloudConfig) pushToCloudWrapper();
+      if(showNotification && settings.notifications) showToast('✓ تم الحفظ', 'success', 1500);
+    }, 300);
+    return true;
+  } catch(e) {
+    document.getElementById('saveIndicator').classList.add('error');
+    document.getElementById('saveStatusText').textContent = '❌ فشل';
+    showToast('❌ فشل الحفظ النهائي: ' + e.message, 'error', 5000);
+    addSyncLog('فشل الحفظ النهائي: ' + e.message, 'error');
+    
+    // اقتراح للمستخدم
+    setTimeout(() => {
+      if(confirm('هل تريد مسح بعض البيانات القديمة لتحرير مساحة؟')) {
+        cleanupLocalStorage();
+        showToast('🧹 تم تنظيف الذاكرة', 'info');
+        // حاول الحفظ مرة أخرى
+        setTimeout(() => saveData(false), 500);
+      }
+    }, 2000);
+    
+    return false;
+  }
+}
+
+function createBackupNow(){
+  try {
+    const backups = getBackups();
+    backups.unshift({ id: Date.now(), date: new Date().toISOString(), data: JSON.parse(JSON.stringify(data)), size: JSON.stringify(data).length, expensesCount: data.expenses.length, projectName: data.project.name || 'مشروع' });
+    while(backups.length > settings.maxBackups) backups.pop();
+    localStorage.setItem(BACKUPS_KEY, JSON.stringify(backups));
+    updateSaveInfo();
+    showToast(`💾 تم (${backups.length}/${settings.maxBackups})`, 'success');
+    return true;
+  } catch(e) { showToast('❌ فشل إنشاء النسخة', 'error'); return false; }
+}
+
+function getBackups(){ try { const s = localStorage.getItem(BACKUPS_KEY); return s ? JSON.parse(s) : []; } catch(e){ return []; } }
+
+function restoreFromBackup(backupId){
+  if(!confirm('⚠️ استبدال البيانات الحالية؟')) return;
+  const backup = getBackups().find(b => b.id === backupId);
+  if(!backup){ showToast('❌ غير موجودة', 'error'); return; }
+  data = backup.data;
+  data.expenses = data.expenses.map(e => ({...e, date: normalizeDate(e.date), generalStmtNumber: e.generalStmtNumber != null ? String(e.generalStmtNumber) : '', stmtContractorStmtNum: e.stmtContractorStmtNum != null ? String(e.stmtContractorStmtNum) : '', payStmtContractorStmtNum: e.payStmtContractorStmtNum != null ? String(e.payStmtContractorStmtNum) : '', prjStmtContractorStmtNum: e.prjStmtContractorStmtNum != null ? String(e.prjStmtContractorStmtNum) : ''}));
+  data.expenses = sortExpensesByDate(data.expenses);
+  saveData(false); init(); closeModal('restoreModal'); showToast('✅ تم الاستعادة', 'success');
+}
+
+function deleteBackup(backupId){
+  if(!confirm('حذف؟')) return;
+  localStorage.setItem(BACKUPS_KEY, JSON.stringify(getBackups().filter(b => b.id !== backupId)));
+  renderBackupList(); updateSaveInfo();
+}
+
+function downloadBackup(backupId){
+  const backup = getBackups().find(b => b.id === backupId);
+  if(!backup) return;
+  const blob = new Blob([JSON.stringify(backup.data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `backup_${backup.projectName}_${new Date(backup.date).toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function clearAllBackups(){ if(!confirm('حذف الكل؟')) return; localStorage.removeItem(BACKUPS_KEY); renderBackupList(); updateSaveInfo(); }
+
+function restoreFromFile(){
+  const file = document.getElementById('restoreFile').files[0];
+  if(!file){ showToast('⚠️ اختر ملف', 'warning'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const imported = JSON.parse(e.target.result);
+      if(imported.expenses && Array.isArray(imported.expenses)){
+        if(confirm('استبدال البيانات؟')){ 
+          data = imported; 
+          data.expenses = data.expenses.map(e => ({...e, date: normalizeDate(e.date), generalStmtNumber: e.generalStmtNumber != null ? String(e.generalStmtNumber) : '', stmtContractorStmtNum: e.stmtContractorStmtNum != null ? String(e.stmtContractorStmtNum) : '', payStmtContractorStmtNum: e.payStmtContractorStmtNum != null ? String(e.payStmtContractorStmtNum) : '', prjStmtContractorStmtNum: e.prjStmtContractorStmtNum != null ? String(e.prjStmtContractorStmtNum) : ''}));
+          data.expenses = sortExpensesByDate(data.expenses);
+          saveData(false); init(); closeModal('restoreModal'); showToast('✅ تم', 'success'); 
+        }
+      } else showToast('❌ ملف غير صالح', 'error');
+    } catch(err) { showToast('❌ خطأ', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+function renderBackupList(){
+  const container = document.getElementById('backupList');
+  const backups = getBackups();
+  if(backups.length === 0){ container.innerHTML = '<div class="empty">لا توجد نسخ</div>'; return; }
+  container.innerHTML = backups.map(b => `
+    <div class="backup-item">
+      <div class="info">
+        <div class="date">📅 ${new Date(b.date).toLocaleString('en-US')}</div>
+        <div class="details">📁 ${b.projectName} • 📊 ${b.expensesCount} • 💾 ${(b.size/1024).toFixed(1)} KB</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-sm btn-restore" onclick="restoreFromBackup(${b.id})">🔄</button>
+        <button class="btn btn-sm btn-export" onclick="downloadBackup(${b.id})">📥</button>
+        <button class="btn btn-sm btn-delete" onclick="deleteBackup(${b.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateSaveInfo(){
+  if(data.lastSaved) document.getElementById('lastSaveTime').textContent = 'آخر: ' + new Date(data.lastSaved).toLocaleTimeString('en-US');
+  try { document.getElementById('dataSize').textContent = (JSON.stringify(data).length / 1024).toFixed(1) + ' KB'; } catch(e) {}
+  document.getElementById('backupCount').textContent = getBackups().length + '/' + settings.maxBackups;
+}
+
+function updateSettings(){
+  settings.autoSave = document.getElementById('settingAutoSave').checked;
+  settings.cloudSync = document.getElementById('settingCloudSync').checked;
+  settings.periodicBackup = document.getElementById('settingPeriodicBackup').checked;
+  settings.notifications = document.getElementById('settingNotifications').checked;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  setupAutoSave();
+  showToast('⚙️ تم', 'success', 1500);
+}
+
+function loadSettingsToUI(){
+  document.getElementById('settingAutoSave').checked = settings.autoSave;
+  document.getElementById('settingCloudSync').checked = settings.cloudSync;
+  document.getElementById('settingPeriodicBackup').checked = settings.periodicBackup;
+  document.getElementById('settingNotifications').checked = settings.notifications;
+}
+
+function setupAutoSave(){
+  if(autoSaveTimer) clearInterval(autoSaveTimer);
+  if(periodicBackupTimer) clearInterval(periodicBackupTimer);
+  if(settings.autoSave) autoSaveTimer = setInterval(() => saveData(false), 30000);
+  if(settings.periodicBackup) periodicBackupTimer = setInterval(() => { if(data.expenses.length > 0) createBackupNow(); }, 10 * 60 * 1000);
+}
+
+function showToast(message, type = 'info', duration = 3000){
+  if(!settings.notifications && type === 'success') return;
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  const icons = { success:'✅', warning:'⚠️', error:'❌', info:'ℹ️' };
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span class="toast-message">${message}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.animation = 'slideIn 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, duration);
+}
+
+window.addEventListener('beforeunload', () => saveData(false));
+document.addEventListener('visibilitychange', () => { if(document.hidden) saveData(false); });
+
+// ✅✅✅ الإصلاح الجوهري لمشكلة عرض المبالغ ✅✅✅
+// استخدام 'en-US' بدلاً من 'ar-JO' لضمان ظهور الأرقام اللاتينية والفواصل الصحيحة
+function formatMoney(n){ 
+  const num = Number(n);
+  if(isNaN(num)) return '0.000 د.أ';
+  return num.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' د.أ'; 
+}
+
+function formatMoneyNum(n){ 
+  const num = Number(n);
+  if(isNaN(num)) return '0.000';
+  return num.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }); 
+}
+
+function updateOverdueStatus(){
+  const today = new Date().toISOString().split('T')[0];
+  let changed = false;
+  data.expenses.forEach(e => {
+    if(e.paymentMethod !== 'cash' && e.paymentStatus !== 'paid'){
+      if(e.dueDate && e.dueDate < today){ if(e.paymentStatus !== 'overdue'){ e.paymentStatus = 'overdue'; changed = true; } }
+      else if(e.paymentStatus === 'overdue'){ e.paymentStatus = 'pending'; changed = true; }
+    }
+  });
+  if(changed) saveData(false);
+}
+
+function togglePaymentFields(){
+  document.getElementById('creditFields').classList.toggle('show', document.getElementById('paymentMethod').value === 'credit');
+  document.getElementById('checkFields').classList.toggle('show', document.getElementById('paymentMethod').value === 'check');
+}
+
+function toggleEditPaymentFields(){
+  document.getElementById('editCreditFields').classList.toggle('show', document.getElementById('editPaymentMethod').value === 'credit');
+  document.getElementById('editCheckFields').classList.toggle('show', document.getElementById('editPaymentMethod').value === 'check');
+}
+
+function toggleStatementFields(){
+  const type = document.getElementById('statementType').value;
+  document.getElementById('statementFields').classList.toggle('show', type === '1');
+  document.getElementById('paymentStmtFields').classList.toggle('show', type === '2');
+  // ✅ تم تحديث المعرف للقسم الجديد
+  document.getElementById('projectStmtFields').classList.toggle('show', type === '3');
+}
+
+function toggleEditStatementFields(){
+  const type = document.getElementById('editStatementType').value;
+  document.getElementById('editStatementFields').classList.toggle('show', type === '1');
+  document.getElementById('editPaymentStmtFields').classList.toggle('show', type === '2');
+  // ✅ تم تحديث المعرف لقسم التعديل الجديد
+  document.getElementById('editProjectStmtFields').classList.toggle('show', type === '3');
+}
+
+function getPayersList(){
+  const payers = new Set();
+  data.expenses.forEach(e => { if(e.payerName && e.payerName.trim()) payers.add(e.payerName.trim()); });
+  return Array.from(payers);
+}
+
+function getCategoriesList(){
+  const cats = new Set();
+  data.expenses.forEach(e => { if(e.category && e.category.trim()) cats.add(e.category.trim()); });
+  return Array.from(cats);
+}
+
+function getProjectsList(){
+  const projects = new Set();
+  data.expenses.forEach(e => { 
+    if(e.prjProjectName && e.prjProjectName.trim()) projects.add(e.prjProjectName.trim());
+    if(e.stmtProjectName && e.stmtProjectName.trim()) projects.add(e.stmtProjectName.trim());
+    if(e.payStmtProjectName && e.payStmtProjectName.trim()) projects.add(e.payStmtProjectName.trim());
+  });
+  return Array.from(projects);
+}
+
+function getStmtNumbersList(){
+  const nums = new Set();
+  data.expenses.forEach(e => { 
+    const num = getExpenseStmtNumber(e);
+    if(num && num !== '-') nums.add(num); 
+  });
+  return Array.from(nums);
+}
+
+function updatePayersList(){
+  const payers = getPayersList();
+  const datalist = document.getElementById('payersList');
+  datalist.innerHTML = payers.map(p => `<option value="${p}">`).join('');
+  const filterPayer = document.getElementById('filterPayer');
+  const currentValue = filterPayer.value;
+  filterPayer.innerHTML = '<option value="">كل الدافعين</option>' + payers.map(p => `<option value="${p}">${p}</option>`).join('');
+  filterPayer.value = currentValue;
+}
+
+function updateCategoryList(){
+  const cats = getCategoriesList();
+  const datalist = document.getElementById('categoryList');
+  datalist.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  const editDatalist = document.getElementById('editCategoryList');
+  if(editDatalist) editDatalist.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  const filterCat = document.getElementById('filterCategory');
+  const currentValue = filterCat.value;
+  filterCat.innerHTML = '<option value="">كل التصنيفات</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  filterCat.value = currentValue;
+}
+
+function updateProjectsList(){
+  const projects = getProjectsList();
+  const datalist = document.getElementById('projectsList');
+  if(datalist) datalist.innerHTML = projects.map(p => `<option value="${p}">`).join('');
+  
+  // تحديث فلاتر المشاريع في الجداول المختلفة
+  const filterStmtProj = document.getElementById('filterStmtProject');
+  if(filterStmtProj) {
+    const curVal = filterStmtProj.value;
+    filterStmtProj.innerHTML = '<option value="">كل المشاريع</option>' + projects.map(p => `<option value="${p}">${p}</option>`).join('');
+    filterStmtProj.value = curVal;
+  }
+  
+  const filterPayStmtProj = document.getElementById('filterPayStmtProject');
+  if(filterPayStmtProj) {
+    const curVal = filterPayStmtProj.value;
+    filterPayStmtProj.innerHTML = '<option value="">كل المشاريع</option>' + projects.map(p => `<option value="${p}">${p}</option>`).join('');
+    filterPayStmtProj.value = curVal;
+  }
+  
+  // ✅ تحديث فلتر المشاريع لكشف المشروع
+  const filterPrjProj = document.getElementById('filterPrjProject');
+  if(filterPrjProj) {
+    const curVal = filterPrjProj.value;
+    filterPrjProj.innerHTML = '<option value="">كل المشاريع</option>' + projects.map(p => `<option value="${p}">${p}</option>`).join('');
+    filterPrjProj.value = curVal;
+  }
+}
+
+function updateStmtNumberFilters(){
+  const allNums = getStmtNumbersList();
+  
+  // فلتر عام لجميع الجداول
+  const filterStmtNum = document.getElementById('filterStmtNumber');
+  const curVal = filterStmtNum.value;
+  filterStmtNum.innerHTML = '<option value="">كل أرقام الكشف</option>' + allNums.map(n => `<option value="${n}">${n}</option>`).join('');
+  filterStmtNum.value = curVal;
+  
+  // فلاتر خاصة بكل كشف
+  const stmt1Nums = data.expenses.filter(e => e.statementType === '1').map(e => getExpenseStmtNumber(e)).filter(n => n !== '-');
+  const uniqueStmt1Nums = [...new Set(stmt1Nums)];
+  const filterStmtNum1 = document.getElementById('filterStmtNumForStmt1');
+  const curVal1 = filterStmtNum1.value;
+  filterStmtNum1.innerHTML = '<option value="">كل الأرقام</option>' + uniqueStmt1Nums.map(n => `<option value="${n}">${n}</option>`).join('');
+  filterStmtNum1.value = curVal1;
+  
+  const stmt2Nums = data.expenses.filter(e => e.statementType === '2').map(e => getExpenseStmtNumber(e)).filter(n => n !== '-');
+  const uniqueStmt2Nums = [...new Set(stmt2Nums)];
+  const filterStmtNum2 = document.getElementById('filterStmtNumForStmt2');
+  const curVal2 = filterStmtNum2.value;
+  filterStmtNum2.innerHTML = '<option value="">كل الأرقام</option>' + uniqueStmt2Nums.map(n => `<option value="${n}">${n}</option>`).join('');
+  filterStmtNum2.value = curVal2;
+  
+  const stmt3Nums = data.expenses.filter(e => e.statementType === '3').map(e => getExpenseStmtNumber(e)).filter(n => n !== '-');
+  const uniqueStmt3Nums = [...new Set(stmt3Nums)];
+  const filterStmtNum3 = document.getElementById('filterStmtNumForStmt3');
+  const curVal3 = filterStmtNum3.value;
+  filterStmtNum3.innerHTML = '<option value="">كل الأرقام</option>' + uniqueStmt3Nums.map(n => `<option value="${n}">${n}</option>`).join('');
+  filterStmtNum3.value = curVal3;
+
+  // ✅ تحديث فلتر رقم الكشف في نافذة التقرير
+  const reportFilter = document.getElementById('reportStmtNumberFilter');
+  if(reportFilter) {
+    const curReportVal = reportFilter.value;
+    reportFilter.innerHTML = '<option value="">كل الأرقام</option>' + allNums.map(n => `<option value="${n}">${n}</option>`).join('');
+    reportFilter.value = curReportVal;
+  }
+}
+
+function applyDateFilter(){ renderTable(); updateDateFilterInfo(); }
+function clearDateFilter(){
+  document.getElementById('filterFromDate').value = '';
+  document.getElementById('filterToDate').value = '';
+  renderTable(); updateDateFilterInfo();
+  showToast('🗑️ تم مسح فلتر التاريخ', 'info');
+}
+function updateDateFilterInfo(){
+  const from = document.getElementById('filterFromDate').value;
+  const to = document.getElementById('filterToDate').value;
+  const infoEl = document.getElementById('dateFilterInfo');
+  if(from || to){ infoEl.textContent = `📅 ${formatDateDisplay(from) || '...'} → ${formatDateDisplay(to) || '...'}`; }
+  else { infoEl.textContent = ''; }
+}
+function clearStmtDateFilter(){ document.getElementById('stmtFromDate').value = ''; document.getElementById('stmtToDate').value = ''; renderStatementTable(); showToast('🗑️ تم مسح فلتر التاريخ', 'info'); }
+function clearPayStmtDateFilter(){ document.getElementById('payStmtFromDate').value = ''; document.getElementById('payStmtToDate').value = ''; renderPaymentStatementTable(); showToast('🗑️ تم مسح فلتر التاريخ', 'info'); }
+// ✅ تم تحديث دالة المسح لقسم المشروع
+function clearPrjDateFilter(){ document.getElementById('prjFromDate').value = ''; document.getElementById('prjToDate').value = ''; renderProjectTable(); showToast('🗑️ تم مسح فلتر التاريخ', 'info'); }
+
+function init(){
+  document.getElementById('projectName').value = data.project.name || '';
+  document.getElementById('projectBudget').value = data.project.budget || '';
+  document.getElementById('date').valueAsDate = new Date();
+  loadSettingsToUI();
+  updateOverdueStatus();
+  updateSaveInfo();
+  renderBackupList();
+  setupAutoSave();
+  updatePayersList();
+  updateCategoryList();
+  updateProjectsList(); // ✅ استدعاء جديد لتحديث قائمة المشاريع
+  updateStmtNumberFilters();
+  if(cloudConfig && cloudConfig.conn){
+    document.getElementById('headerSyncBtn').style.display = 'inline-block';
+    document.getElementById('testConnBtn').style.display = 'inline-block';
+    document.getElementById('qrShareBox').style.display = 'block';
+    pullFromCloud();
+  }
+  renderAll();
+  setTimeout(() => showToast('🏗️ مرحباَ!', 'info', 2500), 500);
+}
+
+function saveProject(){
+  data.project.name = document.getElementById('projectName').value;
+  data.project.budget = parseFloat(document.getElementById('projectBudget').value) || 0;
+  saveData(true);
+  renderStats();
+}
+
+document.getElementById('expenseForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const method = document.getElementById('paymentMethod').value;
+  const stmtType = document.getElementById('statementType').value;
+  const genStmtNum = document.getElementById('generalStmtNumber').value.trim();
+  
+  // تحديد رقم الكشف الخاص بالنوع المختار
+  let specificStmtNum = '';
+  if(stmtType === '1') specificStmtNum = document.getElementById('stmtContractorStmtNum').value.trim();
+  else if(stmtType === '2') specificStmtNum = document.getElementById('payStmtContractorStmtNum').value.trim();
+  // ✅ تم تحديث المرجع لحقول كشف المشروع
+  else if(stmtType === '3') specificStmtNum = document.getElementById('prjStmtContractorStmtNum').value.trim();
+  
+  // إذا كان هناك رقم خاص بالنوع، استخدمه كأولوية، وإلا استخدم الرقم العام
+  const finalStmtNum = specificStmtNum || genStmtNum;
+
+  data.expenses.push({
+    id: Date.now(), category: document.getElementById('category').value.trim(), amount: parseFloat(document.getElementById('amount').value),
+    date: normalizeDate(document.getElementById('date').value),
+    description: document.getElementById('description').value,
+    supplier: document.getElementById('supplier').value, invoiceNo: document.getElementById('invoiceNo').value,
+    notes: document.getElementById('notes').value, payerName: document.getElementById('payerName').value.trim(),
+    paymentMethod: method, paymentStatus: method === 'cash' ? 'paid' : 'pending',
+    statementType: stmtType,
+    generalStmtNumber: genStmtNum,
+    
+    // حقول كشف الاستلام
+    stmtContractor: document.getElementById('stmtContractor').value.trim(),
+    stmtProjectNo: document.getElementById('stmtProjectNo').value.trim(),
+    stmtProjectName: document.getElementById('stmtProjectName').value.trim(),
+    stmtContractorStmtNum: stmtType === '1' ? specificStmtNum : '',
+    stmtContractValue: parseFloat(document.getElementById('stmtContractValue').value) || 0,
+    
+    // حقول كشف الدفعات
+    payStmtContractorStmtNum: stmtType === '2' ? specificStmtNum : '',
+    payStmtProjectName: document.getElementById('payStmtProjectName').value.trim(),
+    payStmtPieceNo: document.getElementById('payStmtPieceNo').value.trim(),
+    payStmtWorkType: document.getElementById('payStmtWorkType').value.trim(),
+    payStmtFromDate: normalizeDate(document.getElementById('payStmtFromDate').value) || '',
+    payStmtToDate: normalizeDate(document.getElementById('payStmtToDate').value) || '',
+    payStmtPaidFrom: document.getElementById('payStmtPaidFrom').value.trim(),
+    
+    // ✅ حقول كشف المشروع الجديدة
+    prjStmtContractorStmtNum: stmtType === '3' ? specificStmtNum : '',
+    prjProjectName: document.getElementById('prjProjectName').value.trim(),
+    prjWorkType: document.getElementById('prjWorkType').value.trim(),
+    prjFromDate: normalizeDate(document.getElementById('prjFromDate').value) || '',
+    prjToDate: normalizeDate(document.getElementById('prjToDate').value) || '',
+    prjPaidFrom: document.getElementById('prjPaidFrom').value.trim(),
+    
+    dueDate: normalizeDate(document.getElementById('dueDate').value) || '',
+    checkNumber: document.getElementById('checkNumber').value || '',
+    bankName: document.getElementById('bankName').value || '',
+    checkDueDate: normalizeDate(document.getElementById('checkDueDate').value) || '',
+    paidDate: method === 'cash' ? new Date().toISOString().split('T')[0] : ''
+  });
+  data.expenses = sortExpensesByDate(data.expenses);
+  saveData(true);
+  this.reset();
+  document.getElementById('date').valueAsDate = new Date();
+  document.getElementById('paymentMethod').value = 'cash';
+  document.getElementById('statementType').value = '';
+  togglePaymentFields(); toggleStatementFields();
+  updatePayersList(); updateCategoryList(); updateProjectsList(); updateStmtNumberFilters();
+  renderAll();
+});
+
+function renderAll(){ 
+  updateOverdueStatus(); updatePayersList(); updateCategoryList(); updateProjectsList(); updateStmtNumberFilters();
+  renderStats(); renderTable(); renderStatementTable(); renderPaymentStatementTable(); renderProjectTable(); renderCharts(); 
+}
+
+function renderStats(){
+  const total = data.expenses.reduce((s,e)=>s+e.amount, 0);
+  const budget = data.project.budget || 0;
+  const remaining = budget - total;
+  const percent = budget>0 ? (total/budget*100) : 0;
+  document.getElementById('totalBudget').textContent = formatMoney(budget);
+  document.getElementById('budgetSub').textContent = data.project.name || 'لم تحدد';
+  document.getElementById('totalSpent').textContent = formatMoney(total);
+  document.getElementById('spentPercent').textContent = percent.toFixed(1) + '%';
+  document.getElementById('totalRemaining').textContent = formatMoney(remaining);
+  document.getElementById('progressFill').style.width = Math.min(percent,100) + '%';
+  document.getElementById('totalCash').textContent = formatMoney(data.expenses.filter(e=>e.paymentMethod==='cash').reduce((s,e)=>s+e.amount,0));
+  document.getElementById('cashSub').textContent = data.expenses.filter(e=>e.paymentMethod==='cash').length;
+  document.getElementById('totalCredit').textContent = formatMoney(data.expenses.filter(e=>e.paymentMethod==='credit').reduce((s,e)=>s+e.amount,0));
+  document.getElementById('creditSub').textContent = data.expenses.filter(e=>e.paymentMethod==='credit').length;
+  document.getElementById('totalCheck').textContent = formatMoney(data.expenses.filter(e=>e.paymentMethod==='check').reduce((s,e)=>s+e.amount,0));
+  document.getElementById('checkSub').textContent = data.expenses.filter(e=>e.paymentMethod==='check').length;
+  document.getElementById('totalOverdue').textContent = formatMoney(data.expenses.filter(e=>e.paymentStatus==='overdue').reduce((s,e)=>s+e.amount,0));
+  document.getElementById('overdueSub').textContent = data.expenses.filter(e=>e.paymentStatus==='overdue').length;
+}
+
+function getFilteredExpenses(){
+  // ✅ إخفاء مصاريف الكشوف الثلاثة من جدول المصاريف الرئيسي
+  let list = data.expenses.filter(e => !e.statementType || e.statementType === '');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('filterCategory').value;
+  const pay = document.getElementById('filterPayment').value;
+  const payer = document.getElementById('filterPayer').value;
+  const status = document.getElementById('filterStatus').value;
+  const stmtNum = document.getElementById('filterStmtNumber').value; // ✅ فلتر رقم الكشف
+  const fromDate = document.getElementById('filterFromDate').value;
+  const toDate = document.getElementById('filterToDate').value;
+  if(search) list = list.filter(e => e.description.toLowerCase().includes(search) || (e.supplier||'').toLowerCase().includes(search) || (e.invoiceNo||'').toLowerCase().includes(search) || (e.checkNumber||'').toLowerCase().includes(search) || (e.payerName||'').toLowerCase().includes(search) || (e.category||'').toLowerCase().includes(search) || (getExpenseStmtNumber(e)||'').toString().toLowerCase().includes(search));
+  if(cat) list = list.filter(e => e.category === cat);
+  if(pay) list = list.filter(e => e.paymentMethod === pay);
+  if(payer) list = list.filter(e => e.payerName === payer);
+  if(status) list = list.filter(e => e.paymentStatus === status);
+  if(stmtNum) list = list.filter(e => getExpenseStmtNumber(e) === stmtNum); // ✅ تطبيق فلتر رقم الكشف
+  if(fromDate) list = list.filter(e => e.date >= fromDate);
+  if(toDate) list = list.filter(e => e.date <= toDate);
+  return sortExpensesByDate(list);
+}
+
+function renderTable(){
+  const tbody = document.getElementById('expensesTable');
+  const list = getFilteredExpenses();
+  if(list.length === 0){ tbody.innerHTML = '<tr><td colspan="9" class="empty">لا توجد مصاريف (الكشوف تظهر في أقسامها الخاصة)</td></tr>'; return; }
+  tbody.innerHTML = list.map((e, i) => {
+    const stmtNum = getExpenseStmtNumber(e);
+    const hasStmt = stmtNum && stmtNum !== '-';
+    return `
+    <tr>
+      <td>${i+1}</td>
+      <td class="stmt-num-cell">${hasStmt ? `<span class="stmt-num-icon">${stmtNum}</span>` : '<span class="stmt-num-empty">—</span>'}</td>
+      <td>${e.description}</td>
+      <td style="font-weight:bold; color:#1e3c72">${formatMoneyNum(e.amount)}</td>
+      <td>${e.supplier||'-'}</td>
+      <td>${e.payerName ? `<span class="payer-badge">👤 ${e.payerName}</span>` : '<span style="color:#999;">-</span>'}</td>
+      <td>${formatDateDisplay(e.date)}</td>
+      <td>${e.notes || '-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-invoice" onclick="printInvoice(${e.id})">🧾</button>
+        ${e.paymentStatus !== 'paid' ? `<button class="btn btn-sm btn-pay" onclick="markAsPaid(${e.id})">💰</button>` : ''}
+        <button class="btn btn-sm btn-edit" onclick="editExpense(${e.id})">✏️</button>
+        <button class="btn btn-sm btn-delete" onclick="deleteExpense(${e.id})">🗑️</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function markAsPaid(id){
+  const e = data.expenses.find(x=>x.id===id);
+  if(!e) return;
+  if(!confirm(`تأكيد تسديد ${formatMoney(e.amount)}؟`)) return;
+  e.paymentStatus = 'paid'; e.paidDate = new Date().toISOString().split('T')[0];
+  saveData(true); renderAll();
+}
+
+function getStatementExpenses(){
+  let list = data.expenses.filter(e => e.statementType === '1');
+  const contractor = document.getElementById('filterStmtContractor').value;
+  const project = document.getElementById('filterStmtProject').value;
+  const stmtNum = document.getElementById('filterStmtNumForStmt1').value; // ✅ فلتر رقم الكشف
+  const fromDate = document.getElementById('stmtFromDate').value;
+  const toDate = document.getElementById('stmtToDate').value;
+  const defaultProject = data.project.name || '';
+  if(contractor) list = list.filter(e => e.stmtContractor === contractor);
+  if(project) list = list.filter(e => (e.stmtProjectName || defaultProject) === project);
+  if(stmtNum) list = list.filter(e => getExpenseStmtNumber(e) === stmtNum); // ✅ تطبيق فلتر رقم الكشف
+  if(fromDate) list = list.filter(e => e.date >= fromDate);
+  if(toDate) list = list.filter(e => e.date <= toDate);
+  return sortExpensesByDate(list);
+}
+
+function renderStatementTable(){
+  const tbody = document.getElementById('statementTable');
+  const list = getStatementExpenses();
+  const defaultProject = data.project.name || '';
+  if(list.length === 0){ tbody.innerHTML = '<tr><td colspan="10" class="empty">لا توجد بنود في كشف استلام اتعاب المقاول</td></tr>'; return; }
+  tbody.innerHTML = list.map((e, i) => {
+    const stmtNum = getExpenseStmtNumber(e);
+    const hasStmt = stmtNum && stmtNum !== '-';
+    return `
+    <tr>
+      <td>${i+1}</td>
+      <td class="stmt-num-cell">${hasStmt ? `<span class="stmt-num-icon">${stmtNum}</span>` : '<span class="stmt-num-empty">—</span>'}</td>
+      <td>${e.description}</td>
+      <td style="font-weight:bold; color:#9c27b0">${formatMoneyNum(e.amount)}</td>
+      <td>${formatMoneyNum(e.stmtContractValue || 0)}</td>
+      <td>${formatDateDisplay(e.date)}</td>
+      <td>${e.stmtContractor || '-'}</td>
+      <td>${e.stmtProjectName || defaultProject ? `<span class="proj-badge">${e.stmtProjectName || defaultProject}</span>` : '-'}</td>
+      <td>${e.notes || '-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-invoice" onclick="printInvoice(${e.id})">🧾</button>
+        <button class="btn btn-sm btn-edit" onclick="editExpense(${e.id})">✏️</button>
+        <button class="btn btn-sm btn-delete" onclick="deleteExpense(${e.id})">🗑️</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function getPaymentStatementExpenses(){
+  let list = data.expenses.filter(e => e.statementType === '2');
+  const project = document.getElementById('filterPayStmtProject').value;
+  const workType = document.getElementById('filterPayStmtWorkType').value;
+  const stmtNum = document.getElementById('filterStmtNumForStmt2').value; // ✅ فلتر رقم الكشف
+  const fromDate = document.getElementById('payStmtFromDate').value;
+  const toDate = document.getElementById('payStmtToDate').value;
+  const defaultProject = data.project.name || '';
+  if(project) list = list.filter(e => (e.payStmtProjectName || defaultProject) === project);
+  if(workType) list = list.filter(e => e.payStmtWorkType === workType);
+  if(stmtNum) list = list.filter(e => getExpenseStmtNumber(e) === stmtNum); // ✅ تطبيق فلتر رقم الكشف
+  if(fromDate) list = list.filter(e => e.date >= fromDate);
+  if(toDate) list = list.filter(e => e.date <= toDate);
+  return sortExpensesByDate(list);
+}
+
+function renderPaymentStatementTable(){
+  const tbody = document.getElementById('paymentStatementTable');
+  const list = getPaymentStatementExpenses();
+  const defaultProject = data.project.name || '';
+  if(list.length === 0){ tbody.innerHTML = '<tr><td colspan="10" class="empty">لا توجد بنود في كشف دفعات المقاولين</td></tr>'; return; }
+  tbody.innerHTML = list.map((e, i) => {
+    const stmtNum = getExpenseStmtNumber(e);
+    const hasStmt = stmtNum && stmtNum !== '-';
+    return `
+    <tr>
+      <td>${i+1}</td>
+      <td class="stmt-num-cell">${hasStmt ? `<span class="stmt-num-icon">${stmtNum}</span>` : '<span class="stmt-num-empty">—</span>'}</td>
+      <td>${e.description}</td>
+      <td style="font-weight:bold; color:#00897b">${formatMoneyNum(e.amount)}</td>
+      <td>${e.payStmtPaidFrom || '-'}</td>
+      <td>${formatDateDisplay(e.date)}</td>
+      <td>${e.payStmtProjectName || defaultProject ? `<span class="proj-badge">${e.payStmtProjectName || defaultProject}</span>` : '-'}</td>
+      <td>${e.payStmtWorkType || '-'}</td>
+      <td>${e.notes || '-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-invoice" onclick="printInvoice(${e.id})">🧾</button>
+        <button class="btn btn-sm btn-edit" onclick="editExpense(${e.id})">✏️</button>
+        <button class="btn btn-sm btn-delete" onclick="deleteExpense(${e.id})">🗑️</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+// ✅ تم تحديث دوال العرض لطابق هيكل كشف المشروع
+function getProjectExpenses(){
+  let list = data.expenses.filter(e => e.statementType === '3');
+  const project = document.getElementById('filterPrjProject').value;
+  const workType = document.getElementById('filterPrjWorkType').value;
+  const stmtNum = document.getElementById('filterStmtNumForStmt3').value; // ✅ فلتر رقم الكشف
+  const fromDate = document.getElementById('prjFromDate').value;
+  const toDate = document.getElementById('prjToDate').value;
+  const defaultProject = data.project.name || '';
+  if(project) list = list.filter(e => (e.prjProjectName || defaultProject) === project);
+  if(workType) list = list.filter(e => e.prjWorkType === workType);
+  if(stmtNum) list = list.filter(e => getExpenseStmtNumber(e) === stmtNum); // ✅ تطبيق فلتر رقم الكشف
+  if(fromDate) list = list.filter(e => e.date >= fromDate);
+  if(toDate) list = list.filter(e => e.date <= toDate);
+  return sortExpensesByDate(list);
+}
+
+function renderProjectTable(){
+  const tbody = document.getElementById('projectTable');
+  const list = getProjectExpenses();
+  const defaultProject = data.project.name || '';
+  if(list.length === 0){ tbody.innerHTML = '<tr><td colspan="10" class="empty">لا توجد بنود في كشف المشروع</td></tr>'; return; }
+  tbody.innerHTML = list.map((e, i) => {
+    const stmtNum = getExpenseStmtNumber(e);
+    const hasStmt = stmtNum && stmtNum !== '-';
+    return `
+    <tr>
+      <td>${i+1}</td>
+      <td class="stmt-num-cell">${hasStmt ? `<span class="stmt-num-icon">${stmtNum}</span>` : '<span class="stmt-num-empty">—</span>'}</td>
+      <td>${e.description}</td>
+      <td style="font-weight:bold; color:#3f51b5">${formatMoneyNum(e.amount)}</td>
+      <td>${e.prjPaidFrom || '-'}</td>
+      <td>${formatDateDisplay(e.date)}</td>
+      <td>${e.prjProjectName || defaultProject ? `<span class="proj-badge">${e.prjProjectName || defaultProject}</span>` : '-'}</td>
+      <td>${e.prjWorkType || '-'}</td>
+      <td>${e.notes || '-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-invoice" onclick="printInvoice(${e.id})">🧾</button>
+        <button class="btn btn-sm btn-edit" onclick="editExpense(${e.id})">✏️</button>
+        <button class="btn btn-sm btn-delete" onclick="deleteExpense(${e.id})">🗑️</button>
+      </td>
+    </tr>
+  `}).join('');
+}
+
+function importStatementFromExcel(stmtType, event){
+  const file = event.target.files[0];
+  if(!file){ showToast('⚠️ اختر ملف Excel', 'warning'); return; }
+  const stmtNames = { '1': 'كشف استلام اتعاب', '2': 'كشف دفعات', '3': 'كشف مشروع' }; // ✅ تم تحديث الاسم
+  const stmtName = stmtNames[stmtType] || 'كشف';
+  showToast(`🔄 جاري استيراد ${stmtName}...`, 'info', 2000);
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data_array = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data_array, { type: 'array', cellDates: true });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      if(jsonData.length === 0){ showToast('❌ الملف فارغ', 'error'); return; }
+      let importedCount = 0;
+      jsonData.forEach((row, index) => {
+        const rawDate = row['التاريخ'] || row['Date'] || row['date'] || new Date().toISOString().split('T')[0];
+        const description = row['البيان'] || row['الوصف'] || row['Description'] || row['description'] || '';
+        const amount = parseFloat(row['المبلغ'] || row['Amount'] || row['amount'] || 0);
+        const notes = row['ملاحظات'] || row['Notes'] || row['notes'] || '';
+        const formattedDate = normalizeDate(rawDate);
+        if(!description || amount <= 0) return;
+        
+        // استخراج رقم الكشف الخاص بالنوع
+        let specificStmtNum = '';
+        if(stmtType === '1') specificStmtNum = row['رقم الكشف الخاص بالاستلام'] || row['رقم الكشف'] || '';
+        else if(stmtType === '2') specificStmtNum = row['رقم الكشف الخاص بالدفعات'] || row['رقم الكشف'] || '';
+        // ✅ تم تحديث المرجع لحقول كشف المشروع
+        else if(stmtType === '3') specificStmtNum = row['رقم الكشف الخاص بالمشروع'] || row['رقم الكشف'] || '';
+        
+        const baseExpense = {
+          id: Date.now() + index,
+          category: row['التصنيف'] || row['Category'] || '',
+          amount: amount, date: formattedDate, description: description,
+          supplier: row['المورد'] || row['من حساب'] || row['Supplier'] || '',
+          invoiceNo: row['رقم الفاتورة'] || row['Invoice'] || '',
+          notes: notes,
+          payerName: row['الدافع'] || row['مدفوع من'] || row['Payer'] || row['اسم الدافع'] || '',
+          paymentMethod: 'cash', paymentStatus: 'paid', paidDate: formattedDate,
+          statementType: stmtType,
+          generalStmtNumber: row['رقم الكشف'] || row['Statement No'] || '',
+          
+          // حقول كشف الاستلام
+          stmtContractor: row['المقاول'] || row['اسم المقاول'] || row['Contractor'] || '',
+          stmtProjectNo: row['رقم المشروع'] || row['Project No'] || '',
+          stmtProjectName: row['المشروع'] || row['اسم المشروع'] || row['Project Name'] || '',
+          stmtContractorStmtNum: stmtType === '1' ? specificStmtNum : '',
+          stmtContractValue: parseFloat(row['قيمة العقد'] || row['Contract Value'] || 0),
+          
+          // حقول كشف الدفعات
+          payStmtContractorStmtNum: stmtType === '2' ? specificStmtNum : '',
+          payStmtProjectName: row['مشروع الدفعات'] || row['المشروع'] || row['Pay Project'] || '',
+          payStmtPieceNo: row['رقم القطعة'] || row['Piece No'] || '',
+          payStmtWorkType: row['نوع العمل'] || row['Work Type'] || '',
+          payStmtFromDate: normalizeDate(row['من تاريخ'] || row['From Date'] || ''),
+          payStmtToDate: normalizeDate(row['إلى تاريخ'] || row['To Date'] || ''),
+          payStmtPaidFrom: row['مدفوع من'] || row['Paid From'] || '',
+          
+          // ✅ حقول كشف المشروع الجديدة
+          prjStmtContractorStmtNum: stmtType === '3' ? specificStmtNum : '',
+          prjProjectName: row['المشروع'] || row['اسم المشروع'] || row['Project Name'] || '',
+          prjWorkType: row['نوع العمل'] || row['Work Type'] || row['التخصص'] || '',
+          prjFromDate: normalizeDate(row['من تاريخ'] || row['From Date'] || ''),
+          prjToDate: normalizeDate(row['إلى تاريخ'] || row['To Date'] || ''),
+          prjPaidFrom: row['مدفوع من'] || row['Paid From'] || '',
+          
+          dueDate: '', checkNumber: '', bankName: '', checkDueDate: ''
+        };
+        data.expenses.push(baseExpense);
+        importedCount++;
+      });
+      if(importedCount === 0){ showToast('❌ لم يتم العثور على بيانات صالحة', 'error'); return; }
+      data.expenses = sortExpensesByDate(data.expenses);
+      saveData(true);
+      renderAll();
+      showToast(`✅ تم استيراد ${importedCount} بند إلى ${stmtName}`, 'success', 3000);
+      addSyncLog(`تم استيراد ${importedCount} بند إلى ${stmtName} من Excel`, 'success');
+    } catch(err) { 
+      showToast('❌ خطأ في قراءة Excel: ' + err.message, 'error', 4000); 
+      addSyncLog('فشل استيراد Excel: ' + err.message, 'error'); 
+    }
+  };
+  reader.onerror = function(){ showToast('❌ خطأ في قراءة الملف', 'error'); };
+  reader.readAsArrayBuffer(file);
+  event.target.value = '';
+}
+
+function clearStatement(){
+  if(!confirm('⚠️ مسح جميع بنود كشف استلام اتعاب المقاول؟')) return;
+  if(!confirm('تأكيد نهائي؟')) return;
+  data.expenses = data.expenses.filter(e => e.statementType !== '1');
+  saveData(true); renderAll();
+  showToast('🗑️ تم مسح كشف استلام اتعاب', 'info');
+}
+
+function clearPaymentStatement(){
+  if(!confirm('⚠️ مسح جميع بنود كشف دفعات المقاولين؟')) return;
+  if(!confirm('تأكيد نهائي؟')) return;
+  data.expenses = data.expenses.filter(e => e.statementType !== '2');
+  saveData(true); renderAll();
+  showToast('🗑️ تم مسح كشف دفعات', 'info');
+}
+
+// ✅ تم تحديث دالة المسح لقسم المشروع
+function clearProjectStatement(){
+  if(!confirm('⚠️ مسح جميع بنود كشف المشروع؟')) return;
+  if(!confirm('تأكيد نهائي؟')) return;
+  data.expenses = data.expenses.filter(e => e.statementType !== '3');
+  saveData(true); renderAll();
+  showToast('🗑️ تم مسح كشف المشروع', 'info');
+}
+
+let pieChart, lineChart;
+function renderCharts(){
+  const paymentTotals = { cash:0, credit:0, check:0 };
+  data.expenses.forEach(e => paymentTotals[e.paymentMethod] = (paymentTotals[e.paymentMethod]||0) + e.amount);
+  if(pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels: ['💵 نقد', '📋 ذمم', '🏦 شيكات'], datasets:[{ data: [paymentTotals.cash, paymentTotals.credit, paymentTotals.check], backgroundColor: ['#27ae60', '#f39c12', '#2980b9'] }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{font:{size:11}} } } }
+  });
+  const byDate = {};
+  data.expenses.forEach(e => {
+    const normalizedDate = normalizeDate(e.date);
+    byDate[normalizedDate] = (byDate[normalizedDate]||0) + e.amount;
+  });
+  const sortedDates = Object.keys(byDate).sort();
+  if(lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('lineChart').getContext('2d'), {
+    type:'line',
+    data:{ labels: sortedDates, datasets:[{ label:'المصروفات', data: sortedDates.map(d=>byDate[d]), borderColor:'#ff8c00', backgroundColor:'rgba(255,140,0,0.1)', fill:true, tension:0.3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true } } }
+  });
+}
+
+function deleteExpense(id){ 
+  if(!confirm('حذف؟')) return; 
+  data.expenses = data.expenses.filter(e=>e.id!==id); 
+  data.expenses = sortExpensesByDate(data.expenses);
+  saveData(true); 
+  renderAll(); 
+}
+
+function editExpense(id){
+  const e = data.expenses.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('editId').value = e.id;
+  document.getElementById('editCategory').value = e.category || '';
+  document.getElementById('editAmount').value = e.amount;
+  document.getElementById('editDate').value = e.date;
+  document.getElementById('editGeneralStmtNumber').value = e.generalStmtNumber != null ? String(e.generalStmtNumber) : '';
+  document.getElementById('editPaymentMethod').value = e.paymentMethod || 'cash';
+  document.getElementById('editPayerName').value = e.payerName || '';
+  document.getElementById('editStatementType').value = e.statementType || '';
+  document.getElementById('editPaymentStatus').value = e.paymentStatus || 'pending';
+  document.getElementById('editDueDate').value = e.dueDate || '';
+  document.getElementById('editCheckNumber').value = e.checkNumber || '';
+  document.getElementById('editBankName').value = e.bankName || '';
+  document.getElementById('editCheckDueDate').value = e.checkDueDate || '';
+  
+  // حقول كشف الاستلام
+  document.getElementById('editStmtContractor').value = e.stmtContractor || '';
+  document.getElementById('editStmtProjectNo').value = e.stmtProjectNo || '';
+  document.getElementById('editStmtProjectName').value = e.stmtProjectName || '';
+  document.getElementById('editStmtContractorStmtNum').value = e.stmtContractorStmtNum || '';
+  document.getElementById('editStmtContractValue').value = e.stmtContractValue || 0;
+  
+  // حقول كشف الدفعات
+  document.getElementById('editPayStmtContractorStmtNum').value = e.payStmtContractorStmtNum || '';
+  document.getElementById('editPayStmtProjectName').value = e.payStmtProjectName || '';
+  document.getElementById('editPayStmtPieceNo').value = e.payStmtPieceNo || '';
+  document.getElementById('editPayStmtWorkType').value = e.payStmtWorkType || '';
+  document.getElementById('editPayStmtFromDate').value = e.payStmtFromDate || '';
+  document.getElementById('editPayStmtToDate').value = e.payStmtToDate || '';
+  document.getElementById('editPayStmtPaidFrom').value = e.payStmtPaidFrom || '';
+  
+  // ✅ حقول كشف المشروع الجديدة
+  document.getElementById('editPrjStmtContractorStmtNum').value = e.prjStmtContractorStmtNum || '';
+  document.getElementById('editPrjProjectName').value = e.prjProjectName || '';
+  document.getElementById('editPrjWorkType').value = e.prjWorkType || '';
+  document.getElementById('editPrjFromDate').value = e.prjFromDate || '';
+  document.getElementById('editPrjToDate').value = e.prjToDate || '';
+  document.getElementById('editPrjPaidFrom').value = e.prjPaidFrom || '';
+  
+  document.getElementById('editDescription').value = e.description;
+  document.getElementById('editSupplier').value = e.supplier||'';
+  document.getElementById('editInvoiceNo').value = e.invoiceNo||'';
+  document.getElementById('editNotes').value = e.notes||'';
+  toggleEditPaymentFields(); toggleEditStatementFields();
+  document.getElementById('editModal').classList.add('active');
+}
+
+document.getElementById('editForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const id = parseInt(document.getElementById('editId').value);
+  const idx = data.expenses.findIndex(x=>x.id===id);
+  if(idx===-1) return;
+  const old = data.expenses[idx];
+  const genStmt = document.getElementById('editGeneralStmtNumber').value.trim();
+  
+  // تحديد رقم الكشف الخاص بالنوع المختار
+  let specificStmtNum = '';
+  const stmtType = document.getElementById('editStatementType').value;
+  if(stmtType === '1') specificStmtNum = document.getElementById('editStmtContractorStmtNum').value.trim();
+  else if(stmtType === '2') specificStmtNum = document.getElementById('editPayStmtContractorStmtNum').value.trim();
+  // ✅ تم تحديث المرجع لحقول كشف المشروع
+  else if(stmtType === '3') specificStmtNum = document.getElementById('editPrjStmtContractorStmtNum').value.trim();
+  
+  // إذا كان هناك رقم خاص بالنوع، استخدمه كأولوية، وإلا استخدم الرقم العام
+  const finalStmtNum = specificStmtNum || genStmt;
+
+  data.expenses[idx] = {
+    ...old, category: document.getElementById('editCategory').value.trim(), amount: parseFloat(document.getElementById('editAmount').value),
+    date: normalizeDate(document.getElementById('editDate').value),
+    generalStmtNumber: genStmt,
+    paymentMethod: document.getElementById('editPaymentMethod').value,
+    payerName: document.getElementById('editPayerName').value.trim(),
+    statementType: stmtType,
+    paymentStatus: document.getElementById('editPaymentStatus').value,
+    dueDate: normalizeDate(document.getElementById('editDueDate').value) || '',
+    checkNumber: document.getElementById('editCheckNumber').value,
+    bankName: document.getElementById('editBankName').value,
+    checkDueDate: normalizeDate(document.getElementById('editCheckDueDate').value) || '',
+    
+    // حقول كشف الاستلام
+    stmtContractor: document.getElementById('editStmtContractor').value.trim(),
+    stmtProjectNo: document.getElementById('editStmtProjectNo').value.trim(),
+    stmtProjectName: document.getElementById('editStmtProjectName').value.trim(),
+    stmtContractorStmtNum: stmtType === '1' ? specificStmtNum : '',
+    stmtContractValue: parseFloat(document.getElementById('editStmtContractValue').value) || 0,
+    
+    // حقول كشف الدفعات
+    payStmtContractorStmtNum: stmtType === '2' ? specificStmtNum : '',
+    payStmtProjectName: document.getElementById('editPayStmtProjectName').value.trim(),
+    payStmtPieceNo: document.getElementById('editPayStmtPieceNo').value.trim(),
+    payStmtWorkType: document.getElementById('editPayStmtWorkType').value.trim(),
+    payStmtFromDate: normalizeDate(document.getElementById('editPayStmtFromDate').value) || '',
+    payStmtToDate: normalizeDate(document.getElementById('editPayStmtToDate').value) || '',
+    payStmtPaidFrom: document.getElementById('editPayStmtPaidFrom').value.trim(),
+    
+    // ✅ حقول كشف المشروع الجديدة
+    prjStmtContractorStmtNum: stmtType === '3' ? specificStmtNum : '',
+    prjProjectName: document.getElementById('editPrjProjectName').value.trim(),
+    prjWorkType: document.getElementById('editPrjWorkType').value.trim(),
+    prjFromDate: normalizeDate(document.getElementById('editPrjFromDate').value) || '',
+    prjToDate: normalizeDate(document.getElementById('editPrjToDate').value) || '',
+    prjPaidFrom: document.getElementById('editPrjPaidFrom').value.trim(),
+    
+    description: document.getElementById('editDescription').value,
+    supplier: document.getElementById('editSupplier').value,
+    invoiceNo: document.getElementById('editInvoiceNo').value,
+    notes: document.getElementById('editNotes').value
+  };
+  data.expenses = sortExpensesByDate(data.expenses);
+  saveData(true); closeModal('editModal'); updatePayersList(); updateCategoryList(); updateProjectsList(); updateStmtNumberFilters(); renderAll();
+});
+
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function openRestoreModal(){ renderBackupList(); document.getElementById('restoreModal').classList.add('active'); }
+function openSettingsModal(){ loadSettingsToUI(); document.getElementById('settingsModal').classList.add('active'); }
+
+function printInvoice(id){
+  const e = data.expenses.find(x=>x.id===id);
+  if(!e) return;
+  const invoiceNum = 'INV-' + String(e.id).slice(-6);
+  const isPaid = e.paymentStatus === 'paid';
+  const stmtNum = getExpenseStmtNumber(e);
+  let paymentInfoHtml = '';
+  if(e.paymentMethod === 'cash') paymentInfoHtml = `<div class="inv-payment cash"><h4 style="color:#27ae60;">💵 طريقة الدفع: نقد</h4><p><strong>الحالة:</strong> ✅ مدفوع نقداَ</p>${e.paidDate ? `<p><strong>تاريخ الدفع:</strong> ${formatDateDisplay(e.paidDate)}</p>` : ''}</div>`;
+  else if(e.paymentMethod === 'credit') paymentInfoHtml = `<div class="inv-payment credit"><h4 style="color:#e67e22;">📋 طريقة الدفع: ذمم (آجل)</h4><p><strong>الحالة:</strong> ${STATUS_LABELS[e.paymentStatus]}</p>${e.dueDate ? `<p><strong>تاريخ الاستحقاق:</strong> ${formatDateDisplay(e.dueDate)}</p>` : ''}${e.paidDate ? `<p><strong>تاريخ السداد:</strong> ${formatDateDisplay(e.paidDate)}</p>` : ''}</div>`;
+  else if(e.paymentMethod === 'check') paymentInfoHtml = `<div class="inv-payment check"><h4 style="color:#2980b9;">🏦 طريقة الدفع: شيك</h4><p><strong>الحالة:</strong> ${STATUS_LABELS[e.paymentStatus]}</p>${e.checkNumber ? `<p><strong>رقم الشيك:</strong> ${e.checkNumber}</p>` : ''}${e.bankName ? `<p><strong>البنك:</strong> ${e.bankName}</p>` : ''}${e.checkDueDate ? `<p><strong>تاريخ الاستحقاق:</strong> ${formatDateDisplay(e.checkDueDate)}</p>` : ''}${e.paidDate ? `<p><strong>تاريخ الصرف:</strong> ${formatDateDisplay(e.paidDate)}</p>` : ''}</div>`;
+  const payerHtml = e.payerName ? `<div class="inv-payer-box"><h4>👤 اسم الدافع</h4><p><strong>الاسم:</strong> ${e.payerName}</p>${e.paidDate ? `<p><strong>تاريخ الدفع:</strong> ${formatDateDisplay(e.paidDate)}</p>` : ''}</div>` : '';
+  document.getElementById('invoiceContent').innerHTML = `
+    <div class="inv-header">
+      <div class="inv-logo">🏗️ مشروع <span>${data.project.name || 'الإنشاءات'}</span></div>
+      <div class="inv-title">فاتورة مصروف</div>
+    </div>
+    <div class="inv-meta">
+      <div class="inv-meta-box">
+        <h4>📋 معلومات الفاتورة</h4>
+        <p><strong>رقم الفاتورة:</strong> ${invoiceNum}</p>
+        <p><strong>رقم الكشف:</strong> ${stmtNum !== '-' ? stmtNum : 'غير محدد'}</p>
+        <p><strong>التاريخ:</strong> ${formatDateDisplay(e.date)}</p>
+        <p><strong>التصنيف:</strong> ${e.category}</p>
+        ${e.invoiceNo ? `<p><strong>رقم فاتورة المورد:</strong> #${e.invoiceNo}</p>` : ''}
+      </div>
+      <div class="inv-meta-box">
+        <h4>🏢 المورد / الجهة</h4>
+        <p><strong>الاسم:</strong> ${e.supplier || 'غير محدد'}</p>
+        <p><strong>المشروع:</strong> ${data.project.name || '-'}</p>
+      </div>
+    </div>
+    <table class="inv-table">
+      <thead><tr><th style="width:8%">#</th><th style="width:52%">البيان / الوصف</th><th style="width:20%">التصنيف</th><th style="width:20%">المبلغ (د.أ)</th></tr></thead>
+      <tbody><tr><td>1</td><td>${e.description}</td><td>${e.category}</td><td style="font-weight:bold; color:#1e3c72">${formatMoneyNum(e.amount)}</td></tr></tbody>
+    </table>
+    <div class="inv-total">
+      <div class="label">💰 الإجمالي المستحق</div>
+      <div class="amount">${formatMoneyNum(e.amount)} د.أ</div>
+    </div>
+    ${payerHtml}
+    ${paymentInfoHtml}
+    ${e.notes ? `<div class="inv-notes"><h4>💬 ملاحظات</h4><p>${e.notes}</p></div>` : ''}
+    <div class="inv-signatures">
+      <div class="inv-sig-box"><div class="inv-sig-line">توقيع الدافع<br><strong>${e.payerName || '...........'}</strong></div></div>
+      <div class="inv-sig-box"><div class="inv-sig-line">توقيع المستلم</div></div>
+      <div class="inv-sig-box"><div class="inv-sig-line">توقيع المحاسب</div></div>
+    </div>
+    <div class="inv-stamp ${isPaid ? 'paid' : ''}">${isPaid ? 'مدفوع' : (e.paymentMethod === 'cash' ? 'نقد' : 'ذمة')}</div>
+    <div class="inv-footer">
+      <p>تم إنشاء هذه الفاتورة إلكترونياَ</p>
+      <p>تاريخ الطباعة: ${new Date().toLocaleString('en-US')}</p>
+    </div>
+  `;
+  const wrapper = document.getElementById('invoiceWrapper');
+  wrapper.classList.add('printing');
+  setTimeout(() => { window.print(); setTimeout(() => wrapper.classList.remove('printing'), 500); }, 100);
+}
+
+function printStatement(){
+  const list = getStatementExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بنود في كشف استلام اتعاب', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const contractor = list[0]?.stmtContractor || 'غير محدد';
+  const projectNo = list[0]?.stmtProjectNo || '';
+  const projectName = list[0]?.stmtProjectName || defaultProject || '';
+  const statementNo = list[0]?.stmtContractorStmtNum || list[0]?.generalStmtNumber || '';
+  const totalAmount = list.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalContract = list.reduce((sum, s) => sum + (s.stmtContractValue || 0), 0);
+  let rowsHtml = list.map((s, i) => {
+    const sn = getExpenseStmtNumber(s);
+    return `
+    <tr>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${i+1}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.description}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(s.amount)}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(s.stmtContractValue || 0)}</td>
+      <td style="padding:10px; border:1px solid #333;">${formatDateDisplay(s.date)}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  document.getElementById('invoiceContent').innerHTML = `
+    <div style="text-align:center; margin-bottom:20px;">
+      <h1 style="font-size:20px; margin-bottom:10px; border:2px solid #333; padding:10px;">كشف استلام اتعاب مقاول الصحي ${contractor} مشروع رقم ${projectNo} ${projectName} ${statementNo}</h1>
+    </div>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead><tr style="background:#f0f0f0;">
+        <th style="padding:10px; border:1px solid #333; width:8%;">الرقم</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">رقم الكشف</th>
+        <th style="padding:10px; border:1px solid #333; width:32%;">البيان</th>
+        <th style="padding:10px; border:1px solid #333; width:14%;">مبلغ</th>
+        <th style="padding:10px; border:1px solid #333; width:14%;">قيمة العقد</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">التاريخ</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#f0f0f0; font-weight:bold;">
+        <td colspan="3" style="padding:10px; border:1px solid #333; text-align:center;">الإجمالي</td>
+        <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(totalAmount)}</td>
+        <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(totalContract)}</td>
+        <td colspan="2" style="padding:10px; border:1px solid #333;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع المقاول<br><strong>${contractor}</strong></div></div>
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع المسؤول</div></div>
+    </div>
+    <div style="margin-top:30px; text-align:center; color:#777; font-size:11px;"><p>تاريخ الطباعة: ${new Date().toLocaleString('en-US')}</p></div>
+  `;
+  const wrapper = document.getElementById('invoiceWrapper');
+  wrapper.classList.add('printing');
+  setTimeout(() => { window.print(); setTimeout(() => wrapper.classList.remove('printing'), 500); }, 100);
+}
+
+function printPaymentStatement(){
+  const list = getPaymentStatementExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بنود في كشف دفعات', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const statementNo = list[0]?.payStmtContractorStmtNum || list[0]?.generalStmtNumber || '';
+  const projectName = list[0]?.payStmtProjectName || defaultProject || '';
+  const pieceNo = list[0]?.payStmtPieceNo || '';
+  const workType = list[0]?.payStmtWorkType || 'مقاولين';
+  const fromDate = list[0]?.payStmtFromDate || '';
+  const toDate = list[0]?.payStmtToDate || '';
+  const totalAmount = list.reduce((sum, s) => sum + (s.amount || 0), 0);
+  let rowsHtml = list.map((s, i) => {
+    const sn = getExpenseStmtNumber(s);
+    return `
+    <tr>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${i+1}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.description}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(s.amount)}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.payStmtPaidFrom || '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${formatDateDisplay(s.date)}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.payStmtProjectName || defaultProject || '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  document.getElementById('invoiceContent').innerHTML = `
+    <div style="text-align:center; margin-bottom:20px;">
+      <h1 style="font-size:18px; margin-bottom:10px; border:2px solid #333; padding:10px;">كشف دفعات المقاولين ( ${statementNo} ) : مشروع ${projectName} القطعة ${pieceNo} للمقاولين من ${formatDateDisplay(fromDate)} إلى ${formatDateDisplay(toDate)}</h1>
+    </div>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead><tr style="background:#f0f0f0;">
+        <th style="padding:10px; border:1px solid #333; width:8%;">الرقم</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">رقم الكشف</th>
+        <th style="padding:10px; border:1px solid #333; width:30%;">البيان</th>
+        <th style="padding:10px; border:1px solid #333; width:13%;">المبلغ</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">مدفوع من</th>
+        <th style="padding:10px; border:1px solid #333; width:10%;">التاريخ</th>
+        <th style="padding:10px; border:1px solid #333; width:10%;">المشروع</th>
+        <th style="padding:10px; border:1px solid #333; width:10%;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#f0f0f0; font-weight:bold;">
+        <td colspan="3" style="padding:10px; border:1px solid #333; text-align:center;">الإجمالي</td>
+        <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(totalAmount)}</td>
+        <td colspan="4" style="padding:10px; border:1px solid #333;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع المقاول</div></div>
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع المسؤول</div></div>
+    </div>
+    <div style="margin-top:30px; text-align:center; color:#777; font-size:11px;"><p>تاريخ الطباعة: ${new Date().toLocaleString('en-US')}</p></div>
+  `;
+  const wrapper = document.getElementById('invoiceWrapper');
+  wrapper.classList.add('printing');
+  setTimeout(() => { window.print(); setTimeout(() => wrapper.classList.remove('printing'), 500); }, 100);
+}
+
+// ✅ تم تحديث دالة الطباعة بالكامل لتناسب "كشف المشروع"
+function printProjectStatement(){
+  const list = getProjectExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بنود في كشف المشروع', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const projectName = list[0]?.prjProjectName || defaultProject || '';
+  const statementNo = list[0]?.prjStmtContractorStmtNum || list[0]?.generalStmtNumber || '';
+  const workType = list[0]?.prjWorkType || '';
+  const fromDate = list[0]?.prjFromDate || '';
+  const toDate = list[0]?.prjToDate || '';
+  const totalAmount = list.reduce((sum, s) => sum + (s.amount || 0), 0);
+  let rowsHtml = list.map((s, i) => {
+    const sn = getExpenseStmtNumber(s);
+    return `
+    <tr>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${i+1}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:center;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.description}</td>
+      <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(s.amount)}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.prjPaidFrom || '-'}</td>
+      <td style="padding:10px; border:1px solid #333;">${formatDateDisplay(s.date)}</td>
+      <td style="padding:10px; border:1px solid #333;">${s.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  const periodText = (fromDate || toDate) ? `الفترة من ${formatDateDisplay(fromDate) || '...'} إلى ${formatDateDisplay(toDate) || '...'}` : '';
+  document.getElementById('invoiceContent').innerHTML = `
+    <div style="text-align:center; margin-bottom:20px;">
+      <h1 style="font-size:18px; margin-bottom:10px; border:2px solid #333; padding:10px;">كشف مشروع: ${projectName} ${workType ? '('+workType+')' : ''} ${statementNo ? 'كشف رقم '+statementNo : ''} ${periodText}</h1>
+    </div>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead><tr style="background:#f0f0f0;">
+        <th style="padding:10px; border:1px solid #333; width:8%;">الرقم</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">رقم الكشف</th>
+        <th style="padding:10px; border:1px solid #333; width:30%;">البيان</th>
+        <th style="padding:10px; border:1px solid #333; width:13%;">المبلغ</th>
+        <th style="padding:10px; border:1px solid #333; width:12%;">مدفوع من</th>
+        <th style="padding:10px; border:1px solid #333; width:10%;">التاريخ</th>
+        <th style="padding:10px; border:1px solid #333; width:10%;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#f0f0f0; font-weight:bold;">
+        <td colspan="3" style="padding:10px; border:1px solid #333; text-align:center;">الإجمالي</td>
+        <td style="padding:10px; border:1px solid #333; text-align:left;">${formatMoneyNum(totalAmount)}</td>
+        <td colspan="3" style="padding:10px; border:1px solid #333;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:30px;">
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع المسؤول عن المشروع<br><strong>${projectName}</strong></div></div>
+      <div style="text-align:center;"><div style="border-top:2px solid #333; padding-top:10px; font-size:14px;">توقيع الإدارة</div></div>
+    </div>
+    <div style="margin-top:30px; text-align:center; color:#777; font-size:11px;"><p>تاريخ الطباعة: ${new Date().toLocaleString('en-US')}</p></div>
+  `;
+  const wrapper = document.getElementById('invoiceWrapper');
+  wrapper.classList.add('printing');
+  setTimeout(() => { window.print(); setTimeout(() => wrapper.classList.remove('printing'), 500); }, 100);
+}
+
+function openReportModal(){ 
+  // ✅ تحديث خيارات رقم الكشف قبل فتح النافذة
+  updateStmtNumberFilters(); 
+  document.getElementById('reportModal').classList.add('active'); 
+}
+
+function getReportFilteredExpenses(){
+  let list = [...data.expenses];
+  const fromDate = document.getElementById('reportFromDate').value;
+  const toDate = document.getElementById('reportToDate').value;
+  const stmtNum = document.getElementById('reportStmtNumberFilter').value; // ✅ فلتر رقم الكشف
+  
+  if(fromDate) list = list.filter(e => e.date >= fromDate);
+  if(toDate) list = list.filter(e => e.date <= toDate);
+  if(stmtNum) list = list.filter(e => getExpenseStmtNumber(e) === stmtNum); // ✅ تطبيق الفلتر
+  
+  return sortExpensesByDate(list);
+}
+
+function printReportWithFilter(){
+  const list = getReportFilteredExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات في الفترة المحددة', 'warning'); return; }
+  const fromDate = document.getElementById('reportFromDate').value;
+  const toDate = document.getElementById('reportToDate').value;
+  const stmtNum = document.getElementById('reportStmtNumberFilter').value;
+  const total = list.reduce((s,e)=>s+e.amount, 0);
+  const cash = list.filter(e=>e.paymentMethod==='cash').reduce((s,e)=>s+e.amount,0);
+  const credit = list.filter(e=>e.paymentMethod==='credit').reduce((s,e)=>s+e.amount,0);
+  const check = list.filter(e=>e.paymentMethod==='check').reduce((s,e)=>s+e.amount,0);
+  let rowsHtml = list.map((e, i) => {
+    const sn = getExpenseStmtNumber(e);
+    return `
+    <tr>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center;">${i+1}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd;">${e.description}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:left; font-weight:bold;">${formatMoneyNum(e.amount)}</td>
+      <td style="padding:8px; border:1px solid #ddd;">${e.supplier || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd;">${e.payerName || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd;">${formatDateDisplay(e.date)}</td>
+      <td style="padding:8px; border:1px solid #ddd;">${e.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  
+  let periodText = (fromDate || toDate) ? `الفترة: ${formatDateDisplay(fromDate) || '...'} إلى ${formatDateDisplay(toDate) || '...'}` : 'كل الفترات';
+  if(stmtNum) periodText += ` | رقم الكشف: ${stmtNum}`;
+
+  document.getElementById('invoiceContent').innerHTML = `
+    <div style="text-align:center; border-bottom:4px solid #1e3c72; padding-bottom:15px; margin-bottom:20px;">
+      <h1 style="color:#1e3c72; margin:0; font-size:24px;">🏗️ تقرير مصاريف مشروع الإنشاءات</h1>
+      <h2 style="color:#ff8c00; margin-top:8px; font-size:18px;">${data.project.name || 'مشروع'}</h2>
+      <p style="color:#5c6bc0; margin-top:5px; font-size:13px; font-weight:bold;">${periodText}</p>
+      <p style="color:#777; margin-top:5px;">تاريخ التقرير: ${formatDateDisplay(new Date().toISOString().split('T')[0])}</p>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+      <div style="background:#e8f5e9; padding:12px; border-radius:8px; border-right:4px solid #27ae60;"><div style="font-size:11px; color:#666;">💵 النقد</div><div style="font-size:16px; font-weight:bold; color:#27ae60;">${formatMoneyNum(cash)} د.أ</div></div>
+      <div style="background:#fff8e1; padding:12px; border-radius:8px; border-right:4px solid #f39c12;"><div style="font-size:11px; color:#666;">📋 الذمم</div><div style="font-size:16px; font-weight:bold; color:#e67e22;">${formatMoneyNum(credit)} د.أ</div></div>
+      <div style="background:#e3f2fd; padding:12px; border-radius:8px; border-right:4px solid #2980b9;"><div style="font-size:11px; color:#666;">🏦 الشيكات</div><div style="font-size:16px; font-weight:bold; color:#2980b9;">${formatMoneyNum(check)} د.أ</div></div>
+    </div>
+    <h2 style="color:#1e3c72; border-bottom:2px solid #ff8c00; padding-bottom:6px; margin-bottom:12px; font-size:16px;">📋 جدول المصروفات</h2>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:11px;">
+      <thead><tr style="background:#1e3c72; color:#fff;">
+        <th style="padding:8px; border:1px solid #1e3c72;">الرقم</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">رقم الكشف</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">البيان</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">المبلغ</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">من حساب</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">مدفوع من</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">التاريخ</th>
+        <th style="padding:8px; border:1px solid #1e3c72;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#1e3c72; color:#fff; font-weight:bold;">
+        <td colspan="3" style="padding:8px; border:1px solid #1e3c72; text-align:center;">الإجمالي الكلي</td>
+        <td style="padding:8px; border:1px solid #1e3c72; text-align:left;">${formatMoneyNum(total)} د.أ</td>
+        <td colspan="4" style="padding:8px; border:1px solid #1e3c72;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:30px; padding-top:15px; border-top:2px dashed #ccc; text-align:center; color:#777; font-size:11px;">
+      <p>تم إنشاء هذا التقرير بواسطة نظام إدارة مصاريف الإنشاءات</p>
+      <p>تاريخ الإنشاء: ${new Date().toLocaleString('en-US')}</p>
+    </div>
+  `;
+  const wrapper = document.getElementById('invoiceWrapper');
+  wrapper.classList.add('printing');
+  closeModal('reportModal');
+  setTimeout(() => { window.print(); setTimeout(() => wrapper.classList.remove('printing'), 500); }, 100);
+}
+
+async function exportPDFWithFilter(){
+  const list = getReportFilteredExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات في الفترة المحددة', 'warning'); return; }
+  const fromDate = document.getElementById('reportFromDate').value;
+  const toDate = document.getElementById('reportToDate').value;
+  const stmtNum = document.getElementById('reportStmtNumberFilter').value;
+  
+  let periodText = (fromDate || toDate) ? `${formatDateDisplay(fromDate) || '...'} إلى ${formatDateDisplay(toDate) || '...'}` : 'كل الفترات';
+  if(stmtNum) periodText += ` | رقم الكشف: ${stmtNum}`;
+  
+  showToast('🔄 جاري إنشاء PDF...', 'info', 2000);
+  const reportDiv = document.createElement('div');
+  reportDiv.style.cssText = 'position:fixed; top:0; left:0; width:800px; background:#fff; padding:30px; font-family:Segoe UI,Tahoma,Arial; direction:rtl; z-index:10000; box-shadow:0 0 20px rgba(0,0,0,0.3);';
+  const total = list.reduce((s,e)=>s+e.amount, 0);
+  const cash = list.filter(e=>e.paymentMethod==='cash').reduce((s,e)=>s+e.amount,0);
+  const credit = list.filter(e=>e.paymentMethod==='credit').reduce((s,e)=>s+e.amount,0);
+  const check = list.filter(e=>e.paymentMethod==='check').reduce((s,e)=>s+e.amount,0);
+  let rowsHtml = list.map((e, i) => {
+    const sn = getExpenseStmtNumber(e);
+    return `
+    <tr>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center; font-size:11px;">${i+1}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center; font-size:11px;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.description}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:left; font-weight:bold; font-size:11px;">${formatMoneyNum(e.amount)}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.supplier || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.payerName || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${formatDateDisplay(e.date)}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  reportDiv.innerHTML = `
+    <div style="text-align:center; border-bottom:4px solid #1e3c72; padding-bottom:15px; margin-bottom:20px;">
+      <h1 style="color:#1e3c72; margin:0; font-size:26px;">🏗️ تقرير مصاريف مشروع الإنشاءات</h1>
+      <h2 style="color:#ff8c00; margin-top:8px; font-size:18px;">${data.project.name || 'مشروع'}</h2>
+      <p style="color:#5c6bc0; margin-top:5px; font-size:13px; font-weight:bold;">الفترة: ${periodText}</p>
+      <p style="color:#777; margin-top:5px; font-size:12px;">تاريخ التقرير: ${formatDateDisplay(new Date().toISOString().split('T')[0])}</p>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+      <div style="background:#e8f5e9; padding:12px; border-radius:8px; border-right:4px solid #27ae60;"><div style="font-size:11px; color:#666;">💵 النقد</div><div style="font-size:16px; font-weight:bold; color:#27ae60;">${formatMoneyNum(cash)} د.أ</div></div>
+      <div style="background:#fff8e1; padding:12px; border-radius:8px; border-right:4px solid #f39c12;"><div style="font-size:11px; color:#666;">📋 الذمم</div><div style="font-size:16px; font-weight:bold; color:#e67e22;">${formatMoneyNum(credit)} د.أ</div></div>
+      <div style="background:#e3f2fd; padding:12px; border-radius:8px; border-right:4px solid #2980b9;"><div style="font-size:11px; color:#666;">🏦 الشيكات</div><div style="font-size:16px; font-weight:bold; color:#2980b9;">${formatMoneyNum(check)} د.أ</div></div>
+    </div>
+    <h2 style="color:#1e3c72; border-bottom:2px solid #ff8c00; padding-bottom:6px; margin-bottom:12px; font-size:16px;">📋 جدول المصروفات</h2>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead><tr style="background:#1e3c72; color:#fff;">
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">الرقم</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">رقم الكشف</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">البيان</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">المبلغ</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">من حساب</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">مدفوع من</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">التاريخ</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#1e3c72; color:#fff; font-weight:bold;">
+        <td colspan="3" style="padding:10px; border:1px solid #1e3c72; text-align:center; font-size:12px;">الإجمالي الكلي</td>
+        <td style="padding:10px; border:1px solid #1e3c72; text-align:left; font-size:12px;">${formatMoneyNum(total)} د.أ</td>
+        <td colspan="4" style="padding:10px; border:1px solid #1e3c72;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:30px; padding-top:15px; border-top:2px dashed #ccc; text-align:center; color:#777; font-size:11px;">
+      <p>تم إنشاء هذا التقرير بواسطة نظام إدارة مصاريف الإنشاءات</p>
+      <p>تاريخ الإنشاء: ${new Date().toLocaleString('en-US')}</p>
+    </div>
+  `;
+  document.body.appendChild(reportDiv);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  try {
+    window.scrollTo(0, 0);
+    const canvas = await html2canvas(reportDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false, allowTaint: true, scrollX: 0, scrollY: 0, windowWidth: 800 });
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 10;
+    const scaledHeight = imgHeight * ratio;
+    let position = imgY;
+    let remainingHeight = scaledHeight;
+    let sourceY = 0;
+    const pageContentHeight = pdfHeight - 20;
+    while(remainingHeight > 0){
+      if(position > imgY) pdf.addPage();
+      const sourceHeight = Math.min(imgHeight - sourceY, (pageContentHeight / ratio));
+      pdf.addImage(imgData, 'PNG', imgX, position, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
+      remainingHeight -= pageContentHeight;
+      position -= pageContentHeight;
+      sourceY += sourceHeight;
+    }
+    const fileName = `تقرير_مصاريف_${data.project.name || 'مشروع'}_${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
+    showToast('📄 تم إنشاء PDF بنجاح', 'success');
+    addSyncLog('تم تصدير PDF', 'success');
+  } catch(err) {
+    showToast('❌ خطأ في PDF: ' + err.message, 'error');
+    addSyncLog('فشل PDF: ' + err.message, 'error');
+  } finally {
+    document.body.removeChild(reportDiv);
+  }
+  closeModal('reportModal');
+}
+
+function exportExcelWithFilter(){
+  const list = getReportFilteredExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات في الفترة المحددة', 'warning'); return; }
+  const excelData = list.map((e, i) => ({
+    'الرقم': i+1, 'رقم الكشف': getExpenseStmtNumber(e), 'البيان': e.description, 'المبلغ (د.أ)': e.amount,
+    'من حساب': e.supplier || '', 'مدفوع من': e.payerName || '',
+    'التاريخ': formatDateDisplay(e.date), 'ملاحظات': e.notes || '', 'التصنيف': e.category || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = [{wch:8},{wch:12},{wch:35},{wch:15},{wch:20},{wch:18},{wch:12},{wch:25},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws, 'المصروفات');
+  XLSX.writeFile(wb, `مصاريف_${data.project.name || 'مشروع'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📊 تم تصدير Excel', 'success');
+  closeModal('reportModal');
+}
+
+async function exportAllToPDF(){
+  if(data.expenses.length === 0){ showToast('⚠️ لا توجد بيانات', 'warning'); return; }
+  showToast('🔄 جاري إنشاء PDF...', 'info', 2000);
+  const reportDiv = document.createElement('div');
+  reportDiv.style.cssText = 'position:fixed; top:0; left:0; width:800px; background:#fff; padding:30px; font-family:Segoe UI,Tahoma,Arial; direction:rtl; z-index:10000; box-shadow:0 0 20px rgba(0,0,0,0.3);';
+  const total = data.expenses.reduce((s,e)=>s+e.amount, 0);
+  const cash = data.expenses.filter(e=>e.paymentMethod==='cash').reduce((s,e)=>s+e.amount,0);
+  const credit = data.expenses.filter(e=>e.paymentMethod==='credit').reduce((s,e)=>s+e.amount,0);
+  const check = data.expenses.filter(e=>e.paymentMethod==='check').reduce((s,e)=>s+e.amount,0);
+  const overdue = data.expenses.filter(e=>e.paymentStatus==='overdue').reduce((s,e)=>s+e.amount,0);
+  const sorted = sortExpensesByDate(data.expenses);
+  let rowsHtml = sorted.map((e, i) => {
+    const sn = getExpenseStmtNumber(e);
+    return `
+    <tr>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center; font-size:11px;">${i+1}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:center; font-size:11px;">${sn !== '-' ? sn : '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.description}</td>
+      <td style="padding:8px; border:1px solid #ddd; text-align:left; font-weight:bold; font-size:11px;">${formatMoneyNum(e.amount)}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.supplier || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.payerName || '-'}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${formatDateDisplay(e.date)}</td>
+      <td style="padding:8px; border:1px solid #ddd; font-size:11px;">${e.notes || '-'}</td>
+    </tr>
+  `}).join('');
+  reportDiv.innerHTML = `
+    <div style="text-align:center; border-bottom:4px solid #1e3c72; padding-bottom:15px; margin-bottom:20px;">
+      <h1 style="color:#1e3c72; margin:0; font-size:26px;">🏗️ تقرير مصاريف مشروع الإنشاءات</h1>
+      <h2 style="color:#ff8c00; margin-top:8px; font-size:18px;">${data.project.name || 'مشروع'}</h2>
+      <p style="color:#777; margin-top:8px; font-size:12px;">تاريخ التقرير: ${formatDateDisplay(new Date().toISOString().split('T')[0])}</p>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+      <div style="background:#e8f5e9; padding:12px; border-radius:8px; border-right:4px solid #27ae60;"><div style="font-size:11px; color:#666;">💵 النقد</div><div style="font-size:16px; font-weight:bold; color:#27ae60;">${formatMoneyNum(cash)} د.أ</div></div>
+      <div style="background:#fff8e1; padding:12px; border-radius:8px; border-right:4px solid #f39c12;"><div style="font-size:11px; color:#666;">📋 الذمم</div><div style="font-size:16px; font-weight:bold; color:#e67e22;">${formatMoneyNum(credit)} د.أ</div></div>
+      <div style="background:#e3f2fd; padding:12px; border-radius:8px; border-right:4px solid #2980b9;"><div style="font-size:11px; color:#666;">🏦 الشيكات</div><div style="font-size:16px; font-weight:bold; color:#2980b9;">${formatMoneyNum(check)} د.أ</div></div>
+      <div style="background:#ffebee; padding:12px; border-radius:8px; border-right:4px solid #c0392b;"><div style="font-size:11px; color:#666;">⚠️ متأخر</div><div style="font-size:16px; font-weight:bold; color:#c0392b;">${formatMoneyNum(overdue)} د.أ</div></div>
+    </div>
+    <h2 style="color:#1e3c72; border-bottom:2px solid #ff8c00; padding-bottom:6px; margin-bottom:12px; font-size:16px;">📋 جدول المصروفات</h2>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+      <thead><tr style="background:#1e3c72; color:#fff;">
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">الرقم</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">رقم الكشف</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">البيان</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">المبلغ</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">من حساب</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">مدفوع من</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">التاريخ</th>
+        <th style="padding:10px; border:1px solid #1e3c72; font-size:11px;">ملاحظات</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr style="background:#1e3c72; color:#fff; font-weight:bold;">
+        <td colspan="3" style="padding:10px; border:1px solid #1e3c72; text-align:center; font-size:12px;">الإجمالي الكلي</td>
+        <td style="padding:10px; border:1px solid #1e3c72; text-align:left; font-size:12px;">${formatMoneyNum(total)} د.أ</td>
+        <td colspan="4" style="padding:10px; border:1px solid #1e3c72;"></td>
+      </tr></tfoot>
+    </table>
+    <div style="margin-top:30px; padding-top:15px; border-top:2px dashed #ccc; text-align:center; color:#777; font-size:11px;">
+      <p>تم إنشاء هذا التقرير بواسطة نظام إدارة مصاريف الإنشاءات</p>
+      <p>تاريخ الإنشاء: ${new Date().toLocaleString('en-US')}</p>
+    </div>
+  `;
+  document.body.appendChild(reportDiv);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  try {
+    window.scrollTo(0, 0);
+    const canvas = await html2canvas(reportDiv, { scale: 3, useCORS: true, backgroundColor: '#ffffff', logging: false, allowTaint: true, scrollX: 0, scrollY: 0, windowWidth: 800 });
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 10;
+    const scaledHeight = imgHeight * ratio;
+    let position = imgY;
+    let remainingHeight = scaledHeight;
+    let sourceY = 0;
+    const pageContentHeight = pdfHeight - 20;
+    while(remainingHeight > 0){
+      if(position > imgY) pdf.addPage();
+      const sourceHeight = Math.min(imgHeight - sourceY, (pageContentHeight / ratio));
+      pdf.addImage(imgData, 'PNG', imgX, position, imgWidth * ratio, imgHeight * ratio, undefined, 'FAST');
+      remainingHeight -= pageContentHeight;
+      position -= pageContentHeight;
+      sourceY += sourceHeight;
+    }
+    const fileName = `تقرير_مصاريف_${data.project.name || 'مشروع'}_${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
+    showToast('📄 تم إنشاء PDF بنجاح', 'success');
+    addSyncLog('تم تصدير PDF', 'success');
+  } catch(err) {
+    showToast('❌ خطأ في PDF: ' + err.message, 'error');
+    addSyncLog('فشل PDF: ' + err.message, 'error');
+  } finally {
+    document.body.removeChild(reportDiv);
+  }
+}
+
+function importFromExcel(event){
+  const file = event.target.files[0];
+  if(!file){ showToast('⚠️ اختر ملف Excel', 'warning'); return; }
+  showToast('🔄 جاري قراءة الملف...', 'info', 2000);
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data_array = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data_array, { type: 'array', cellDates: true });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      if(jsonData.length === 0){ showToast('❌ الملف فارغ', 'error'); return; }
+      const expenses = jsonData.map((row, index) => {
+        const rawDate = row['التاريخ'] || row['Date'] || row['date'] || new Date().toISOString().split('T')[0];
+        const category = row['التصنيف'] || row['Category'] || row['category'] || '';
+        const description = row['البيان'] || row['الوصف'] || row['Description'] || row['description'] || '';
+        const supplier = row['من حساب'] || row['المورد'] || row['المورد / الجهة'] || row['Supplier'] || row['supplier'] || '';
+        const invoiceNo = row['رقم الفاتورة'] || row['Invoice'] || row['invoiceNo'] || '';
+        const payerName = row['مدفوع من'] || row['اسم الدافع'] || row['الدافع'] || row['Payer'] || row['payerName'] || row['Paid By'] || '';
+        const paymentMethodRaw = row['طريقة الدفع'] || row['Payment'] || row['paymentMethod'] || 'نقد';
+        const statusRaw = row['الحالة'] || row['Status'] || row['paymentStatus'] || '';
+        const amount = parseFloat(row['المبلغ (د.أ)'] || row['المبلغ'] || row['Amount'] || row['amount'] || 0);
+        const notes = row['ملاحظات'] || row['Notes'] || row['notes'] || '';
+        const dueDate = row['تاريخ الاستحقاق'] || row['Due Date'] || row['dueDate'] || '';
+        const checkNumber = row['رقم الشيك'] || row['Check Number'] || row['checkNumber'] || '';
+        const bankName = row['البنك'] || row['Bank'] || row['bankName'] || '';
+        const checkDueDate = row['تاريخ استحقاق الشيك'] || row['Check Due Date'] || row['checkDueDate'] || '';
+        const paidDate = row['تاريخ السداد'] || row['Paid Date'] || row['paidDate'] || '';
+        const statementType = row['نوع الكشف'] || row['Statement Type'] || row['statementType'] || '';
+        const generalStmtNumber = row['رقم الكشف'] || row['Statement No'] || '';
+        
+        // استخراج أرقام الكشف الخاصة بالأنواع المختلفة
+        const stmtContractorStmtNum = row['رقم الكشف الخاص بالاستلام'] || '';
+        const payStmtContractorStmtNum = row['رقم الكشف الخاص بالدفعات'] || '';
+        // ✅ تم تحديث المرجع لحقول كشف المشروع
+        const prjStmtContractorStmtNum = row['رقم الكشف الخاص بالمشروع'] || '';
+        
+        let paymentMethod = 'cash';
+        const pmStr = String(paymentMethodRaw).toLowerCase();
+        if(pmStr.includes('نقد') || pmStr.includes('cash')) paymentMethod = 'cash';
+        else if(pmStr.includes('ذمم') || pmStr.includes('credit') || pmStr.includes('آجل')) paymentMethod = 'credit';
+        else if(pmStr.includes('شيك') || pmStr.includes('check')) paymentMethod = 'check';
+        let paymentStatus = paymentMethod === 'cash' ? 'paid' : 'pending';
+        const stStr = String(statusRaw).toLowerCase();
+        if(stStr.includes('مدفوع') || stStr.includes('paid')) paymentStatus = 'paid';
+        else if(stStr.includes('معل') || stStr.includes('pending')) paymentStatus = 'pending';
+        else if(stStr.includes('متأخر') || stStr.includes('overdue')) paymentStatus = 'overdue';
+        const formattedDate = normalizeDate(rawDate);
+        return {
+          id: Date.now() + index, category: category, amount: amount, date: formattedDate,
+          description: description, supplier: supplier, invoiceNo: invoiceNo,
+          notes: notes, payerName: String(payerName).trim(),
+          paymentMethod: paymentMethod, paymentStatus: paymentStatus,
+          statementType: String(statementType),
+          generalStmtNumber: String(generalStmtNumber),
+          
+          // حقول كشف الاستلام
+          stmtContractor: row['اسم المقاول'] || row['Contractor'] || '',
+          stmtProjectNo: row['رقم المشروع'] || row['Project No'] || '',
+          stmtProjectName: row['اسم المشروع'] || row['Project Name'] || '',
+          stmtContractorStmtNum: String(stmtContractorStmtNum),
+          stmtContractValue: parseFloat(row['قيمة العقد'] || row['Contract Value'] || 0),
+          
+          // حقول كشف الدفعات
+          payStmtContractorStmtNum: String(payStmtContractorStmtNum),
+          payStmtProjectName: row['مشروع الدفعات'] || row['المشروع'] || row['Pay Project'] || '',
+          payStmtPieceNo: row['رقم القطعة'] || row['Piece No'] || '',
+          payStmtWorkType: row['نوع العمل'] || row['Work Type'] || '',
+          payStmtFromDate: normalizeDate(row['من تاريخ'] || row['From Date'] || ''),
+          payStmtToDate: normalizeDate(row['إلى تاريخ'] || row['To Date'] || ''),
+          payStmtPaidFrom: row['مدفوع من'] || row['Paid From'] || '',
+          
+          // ✅ حقول كشف المشروع الجديدة
+          prjStmtContractorStmtNum: String(prjStmtContractorStmtNum),
+          prjProjectName: row['المشروع'] || row['اسم المشروع'] || row['Project Name'] || '',
+          prjWorkType: row['نوع العمل'] || row['Work Type'] || row['التخصص'] || '',
+          prjFromDate: normalizeDate(row['من تاريخ'] || row['From Date'] || ''),
+          prjToDate: normalizeDate(row['إلى تاريخ'] || row['To Date'] || ''),
+          prjPaidFrom: row['مدفوع من'] || row['Paid From'] || '',
+          
+          dueDate: normalizeDate(dueDate) || '',
+          checkNumber: String(checkNumber), bankName: String(bankName),
+          checkDueDate: normalizeDate(checkDueDate) || '',
+          paidDate: normalizeDate(paidDate) || ''
+        };
+      }).filter(e => e.amount > 0 && e.description);
+      if(expenses.length === 0){ showToast('❌ لم يتم العثور على بيانات صالحة', 'error'); return; }
+      const sortedExpenses = sortExpensesByDate(expenses);
+      const action = confirm(`تم العثور على ${sortedExpenses.length} مصروف.\n\n✅ تم ترتيبها حسب التاريخ (الأحدث أولاَ)\n\nاضغط OK للاستبدال\nاضغط Cancel للدمج`);
+      if(action){ data.expenses = sortedExpenses; }
+      else { data.expenses = [...data.expenses, ...sortedExpenses]; data.expenses = sortExpensesByDate(data.expenses); }
+      saveData(true); 
+      renderAll();
+      showToast(`✅ تم استيراد ${sortedExpenses.length} مصروف (مرتبة حسب التاريخ)`, 'success', 3000);
+      addSyncLog(`تم استيراد ${sortedExpenses.length} مصروف من Excel مع الترتيب`, 'success');
+    } catch(err) { 
+      showToast('❌ خطأ في قراءة Excel: ' + err.message, 'error', 4000); 
+      addSyncLog('فشل استيراد Excel: ' + err.message, 'error'); 
+    }
+  };
+  reader.onerror = function(){ showToast('❌ خطأ في قراءة الملف', 'error'); };
+  reader.readAsArrayBuffer(file);
+  event.target.value = '';
+}
+
+function exportToExcel(){
+  if(data.expenses.length === 0){ showToast('⚠️ لا توجد بيانات', 'warning'); return; }
+  const sorted = sortExpensesByDate(data.expenses);
+  const excelData = sorted.map((e, i) => ({
+    'الرقم': i+1, 'رقم الكشف': getExpenseStmtNumber(e), 'البيان': e.description, 'المبلغ (د.أ)': e.amount,
+    'من حساب': e.supplier || '', 'مدفوع من': e.payerName || '',
+    'التاريخ': formatDateDisplay(e.date), 'ملاحظات': e.notes || '', 'التصنيف': e.category || '',
+    'طريقة الدفع': PAYMENT_LABELS[e.paymentMethod] || e.paymentMethod,
+    'الحالة': STATUS_LABELS[e.paymentStatus] || e.paymentStatus,
+    'نوع الكشف': STMT_TYPE_LABELS[e.statementType || ''] || '',
+    'رقم الكشف الخاص بالاستلام': e.stmtContractorStmtNum || '',
+    'رقم الكشف الخاص بالدفعات': e.payStmtContractorStmtNum || '',
+    // ✅ تم تحديث عمود كشف المشروع
+    'رقم الكشف الخاص بالمشروع': e.prjStmtContractorStmtNum || '',
+    'اسم المقاول': e.stmtContractor || '', 'رقم المشروع': e.stmtProjectNo || '',
+    'اسم المشروع (كشف)': e.stmtProjectName || '',
+    'قيمة العقد': e.stmtContractValue || 0,
+    'مشروع الدفعات': e.payStmtProjectName || '',
+    'رقم القطعة': e.payStmtPieceNo || '', 'نوع العمل': e.payStmtWorkType || '',
+    'من تاريخ': formatDateDisplay(e.payStmtFromDate) || '', 'إلى تاريخ': formatDateDisplay(e.payStmtToDate) || '',
+    // ✅ تم تحديث حقول كشف المشروع
+    'اسم المشروع (كشف مشروع)': e.prjProjectName || '',
+    'نوع عمل المشروع': e.prjWorkType || '',
+    'من تاريخ (مشروع)': formatDateDisplay(e.prjFromDate) || '', 'إلى تاريخ (مشروع)': formatDateDisplay(e.prjToDate) || '',
+    'مدفوع من (مشروع)': e.prjPaidFrom || '',
+    'تاريخ الاستحقاق': formatDateDisplay(e.dueDate) || '',
+    'رقم الشيك': e.checkNumber || '', 'البنك': e.bankName || '', 'تاريخ استحقاق الشيك': formatDateDisplay(e.checkDueDate) || '',
+    'تاريخ السداد': formatDateDisplay(e.paidDate) || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = Array(30).fill({wch:15});
+  XLSX.utils.book_append_sheet(wb, ws, 'المصروفات');
+  XLSX.writeFile(wb, `مصاريف_${data.project.name || 'مشروع'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📊 تم تصدير Excel', 'success');
+}
+
+function exportStatementToExcel(){
+  const list = getStatementExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const excelData = list.map((e, i) => ({
+    'الرقم': i+1, 'رقم الكشف': getExpenseStmtNumber(e), 'البيان': e.description, 'المبلغ': e.amount,
+    'قيمة العقد': e.stmtContractValue || 0, 'التاريخ': formatDateDisplay(e.date),
+    'المقاول': e.stmtContractor || '', 'المشروع': e.stmtProjectName || defaultProject || '',
+    'ملاحظات': e.notes || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = [{wch:8},{wch:12},{wch:30},{wch:15},{wch:15},{wch:12},{wch:20},{wch:20},{wch:25}];
+  XLSX.utils.book_append_sheet(wb, ws, 'كشف استلام اتعاب');
+  XLSX.writeFile(wb, `كشف_استلام_اتعاب_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📊 تم تصدير كشف استلام اتعاب', 'success');
+}
+
+function exportPaymentStatementToExcel(){
+  const list = getPaymentStatementExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const excelData = list.map((e, i) => ({
+    'الرقم': i+1, 'رقم الكشف': getExpenseStmtNumber(e), 'البيان': e.description, 'المبلغ': e.amount,
+    'مدفوع من': e.payStmtPaidFrom || '', 'التاريخ': formatDateDisplay(e.date),
+    'المشروع': e.payStmtProjectName || defaultProject || '', 'رقم القطعة': e.payStmtPieceNo || '',
+    'نوع العمل': e.payStmtWorkType || '', 'ملاحظات': e.notes || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = [{wch:8},{wch:12},{wch:30},{wch:15},{wch:15},{wch:12},{wch:20},{wch:12},{wch:15},{wch:25}];
+  XLSX.utils.book_append_sheet(wb, ws, 'كشف دفعات');
+  XLSX.writeFile(wb, `كشف_دفعات_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📊 تم تصدير كشف دفعات', 'success');
+}
+
+// ✅ تم تحديث دالة التصدير لتناسب "كشف المشروع"
+function exportProjectToExcel(){
+  const list = getProjectExpenses();
+  if(list.length === 0){ showToast('⚠️ لا توجد بيانات', 'warning'); return; }
+  const defaultProject = data.project.name || '';
+  const excelData = list.map((e, i) => ({
+    'الرقم': i+1, 'رقم الكشف': getExpenseStmtNumber(e), 'البيان': e.description, 'المبلغ': e.amount,
+    'مدفوع من': e.prjPaidFrom || '', 'التاريخ': formatDateDisplay(e.date),
+    'المشروع': e.prjProjectName || defaultProject || '', 'نوع العمل': e.prjWorkType || '',
+    'من تاريخ': formatDateDisplay(e.prjFromDate) || '',
+    'إلى تاريخ': formatDateDisplay(e.prjToDate) || '',
+    'ملاحظات': e.notes || ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = [{wch:8},{wch:12},{wch:30},{wch:15},{wch:15},{wch:12},{wch:20},{wch:15},{wch:12},{wch:12},{wch:25}];
+  XLSX.utils.book_append_sheet(wb, ws, 'كشف مشروع');
+  XLSX.writeFile(wb, `كشف_مشروع_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📊 تم تصدير كشف المشروع', 'success');
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `expenses_${data.project.name||'project'}_${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  showToast('📤 تم التصدير', 'success');
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const imported = JSON.parse(e.target.result);
+      if(imported.expenses && Array.isArray(imported.expenses)){
+        if(confirm('استبدال؟ (إلغاء = دمج)')){ data = imported; }
+        else { data.expenses = [...data.expenses, ...imported.expenses]; if(imported.project) data.project = imported.project; }
+        data.expenses = data.expenses.map(e => ({...e, date: normalizeDate(e.date), generalStmtNumber: e.generalStmtNumber != null ? String(e.generalStmtNumber) : '', stmtContractorStmtNum: e.stmtContractorStmtNum != null ? String(e.stmtContractorStmtNum) : '', payStmtContractorStmtNum: e.payStmtContractorStmtNum != null ? String(e.payStmtContractorStmtNum) : '', prjStmtContractorStmtNum: e.prjStmtContractorStmtNum != null ? String(e.prjStmtContractorStmtNum) : ''}));
+        data.expenses = sortExpensesByDate(data.expenses);
+        saveData(true); init(); showToast('✅ تم', 'success');
+      } else showToast('❌ ملف غير صالح', 'error');
+    } catch(err) { showToast('❌ خطأ', 'error'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+function clearAll(){
+  if(!confirm('⚠️ حذف الكل؟')) return;
+  if(!confirm('تأكيد نهائي؟')) return;
+  createBackupNow(); data.expenses = []; saveData(true); renderAll(); showToast('🗑️ تم', 'info');
+}
+
+init();
+</script>
+</body>
+</html>
